@@ -17,6 +17,9 @@ import org.messageduct.protocol.BinaryProtocol;
 
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import java.util.concurrent.ThreadPoolExecutor;
 
 /**
@@ -28,6 +31,7 @@ public class ServerNetworking {
     private final int port;
     private final int bufferSize;
     private final int idleTimeSeconds;
+    private final List<Class> allowedClasses = new ArrayList<Class>();
 
     private IoAcceptor acceptor;
     private ThreadPoolExecutor executor;
@@ -35,36 +39,63 @@ public class ServerNetworking {
 
 
     /**
-     * Creates a new server networking handler, with a 2kb buffer and a half minute idle time.
+     * Creates a new server networking handler, with a 8kb buffer and a half minute idle time.
+     * Remember to add any classes that should be allowed to be transferred with registerAllowedClass.
      * @param authenticator used for authenticating users and creating new accounts.
      * @param port port that the server should listen at.
      */
     public ServerNetworking(Authenticator authenticator, int port) {
-        this(authenticator, port, 2048);
+        this(authenticator, port, Collections.<Class>emptyList());
+    }
+
+    /**
+     * Creates a new server networking handler, with a 8kb buffer and a half minute idle time.
+     * @param authenticator used for authenticating users and creating new accounts.
+     * @param port port that the server should listen at.
+     * @param allowedClasses the classes that are allowed to be transferred over the connection and instantiated.
+     *                       Primitive and wrapper classes are allowed by default.
+     */
+    public ServerNetworking(Authenticator authenticator, int port, final List<Class> allowedClasses) {
+        this(authenticator, port, allowedClasses, 8 * 1024);
     }
 
     /**
      * Creates a new server networking handler with a half minute idle time.
      * @param authenticator used for authenticating users and creating new accounts.
      * @param port port that the server should listen at.
+     * @param allowedClasses the classes that are allowed to be transferred over the connection and instantiated.
+ *                       Primitive and wrapper classes are allowed by default.
      * @param bufferSize Input buffer size.
      */
-    public ServerNetworking(Authenticator authenticator, int port, int bufferSize) {
-        this(authenticator, port, bufferSize, 30);
+    public ServerNetworking(Authenticator authenticator, int port, final List<Class> allowedClasses, int bufferSize) {
+        this(authenticator, port, allowedClasses, bufferSize, 30);
     }
 
     /**
      * Creates a new server networking handler.
      * @param authenticator used for authenticating users and creating new accounts.
      * @param port port that the server should listen at.
+     * @param allowedClasses the classes that are allowed to be transferred over the connection and instantiated.
+ *                       Primitive and wrapper classes are allowed by default.
      * @param bufferSize Input buffer size.
      * @param idleTimeSeconds time before connection handlers are notified that the connection is idle.
      */
-    public ServerNetworking(Authenticator authenticator, int port, int bufferSize, int idleTimeSeconds) {
+    public ServerNetworking(Authenticator authenticator, int port, final List<Class> allowedClasses, int bufferSize, int idleTimeSeconds) {
         this.authenticator = authenticator;
         this.port = port;
         this.bufferSize = bufferSize;
         this.idleTimeSeconds = idleTimeSeconds;
+        this.allowedClasses.addAll(allowedClasses);
+    }
+
+    /**
+     * Adds a class that will be allowed to be transferred over connections created in the future.
+     * Should not be called after start is called.
+     */
+    public void registerAllowedClass(Class aClass) {
+        if (isStarted()) throw new IllegalStateException("Registering new allowed classes not permitted after start is called.");
+
+        allowedClasses.add(aClass);
     }
 
     /**
@@ -72,7 +103,7 @@ public class ServerNetworking {
      * @throws Exception if there was a problem binding to the port, or some other issue.
      */
     public void start() throws Exception {
-        if (acceptor != null) throw new IllegalStateException("Already started");
+        if (isStarted()) throw new IllegalStateException("Already started");
 
         executor = createThreadPool();
 
@@ -103,7 +134,7 @@ public class ServerNetworking {
         acceptor.getFilterChain().addLast("compress", new CompressionFilter());
 
         // Encode/Decode traffic
-        acceptor.getFilterChain().addLast("codec", new ProtocolCodecFilter(new BinaryProtocol()));
+        acceptor.getFilterChain().addLast("codec", new ProtocolCodecFilter(new BinaryProtocol(allowedClasses, bufferSize)));
 
         // Ensure authentication is done before passing messages on
         acceptor.getFilterChain().addLast("authentication", new AuthenticationFilter(authenticator));
@@ -113,6 +144,13 @@ public class ServerNetworking {
 
         // Listen to the specified port
         acceptor.bind(new InetSocketAddress(port));
+    }
+
+    /**
+     * @return true if this ServerNetworking has been started.
+     */
+    public boolean isStarted() {
+        return acceptor != null;
     }
 
     /**

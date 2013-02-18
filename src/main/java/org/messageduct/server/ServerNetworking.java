@@ -74,13 +74,19 @@ public class ServerNetworking {
     public void start() throws Exception {
         if (acceptor != null) throw new IllegalStateException("Already started");
 
-        acceptor = new NioSocketAcceptor();
         executor = createThreadPool();
+
+        // Setup acceptor
+        acceptor = new NioSocketAcceptor();
+        // Set buffer size used for incoming messages
+        acceptor.getSessionConfig().setReadBufferSize(bufferSize);
+        // Set time after witch idle is called on the connection handler.
+        acceptor.getSessionConfig().setIdleTime(IdleStatus.BOTH_IDLE, idleTimeSeconds);
 
         // Blacklist
         acceptor.getFilterChain().addLast("blacklist", blacklistFilter);
 
-        // Slow down new connections
+        // Limit rate of new connections from a single source
         acceptor.getFilterChain().addLast("connectionThrottle", new ConnectionThrottleFilter());
 
         // Execute incoming messages in threads from the thread pool.
@@ -96,20 +102,14 @@ public class ServerNetworking {
         // Compress/decompress
         acceptor.getFilterChain().addLast("compress", new CompressionFilter());
 
-        // Decode traffic
+        // Encode/Decode traffic
         acceptor.getFilterChain().addLast("codec", new ProtocolCodecFilter(new BinaryProtocol()));
 
-        // Ensure messages are authenticated
+        // Ensure authentication is done before passing messages on
         acceptor.getFilterChain().addLast("authentication", new AuthenticationFilter(authenticator));
 
         // Set handler class that handles incoming messages and events.
         acceptor.setHandler(createConnectionHandler());
-
-        // Set buffer size used for incoming messages
-        acceptor.getSessionConfig().setReadBufferSize(bufferSize);
-
-        // Set time after witch idle is called on the connection handler.
-        acceptor.getSessionConfig().setIdleTime(IdleStatus.BOTH_IDLE, idleTimeSeconds);
 
         // Listen to the specified port
         acceptor.bind(new InetSocketAddress(port));

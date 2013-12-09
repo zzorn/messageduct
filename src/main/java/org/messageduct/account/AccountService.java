@@ -25,7 +25,7 @@ public interface AccountService {
     /**
      * Handle the specified AccountMessage.
      *
-     * @return AccountResponseMessage to send to the client
+     * @return AccountResponseMessage to send to the client, or null to send no response
      */
     AccountResponseMessage handleMessage(AccountMessage accountMessage);
 

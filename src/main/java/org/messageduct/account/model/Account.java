@@ -1,4 +1,4 @@
-package org.messageduct.account.account;
+package org.messageduct.account.model;
 
 /**
  * Data about an user account.

@@ -37,27 +37,29 @@ public final class AuthenticationFilter extends IoFilterAdapter {
                 }
                 else {
                     // All other messages require that we are logged in
-                    response = new ErrorMessage("Unauthorized message", "The messge " +message.getClass().getSimpleName() + " is not supported when not logged in.  Please log in first.", true);
+                    response = new ErrorMessage("Unauthorized message", "The message " +message.getClass().getSimpleName() + " is not supported when not logged in.  Please log in first.", true);
                 }
             }
             else {
-                // Handle the message if it is an account message
+                // Handle the message if it is an account related message
                 if (AccountMessage.class.isInstance(message)) {
                     AccountMessage accountMessage = (AccountMessage) message;
-                    if (userSession.getUserName().equals(accountMessage.getUsername())) {
-                        response = accountService.handleMessage(accountMessage);
-                    } else {
+                    if (!userSession.getUserName().equals(accountMessage.getUsername())) {
+                        // Something wrong if username doesn't match session
                         response = new ErrorMessage("WrongUsername", "The username in the message ("+accountMessage.getUsername()+") " +
                                                                      "did not match with the logged in username ("+userSession.getUserName()+")", true);
+                    } else {
+                        // Forward message to account service for handling
+                        response = accountService.handleMessage(accountMessage);
                     }
                 }
                 else {
-                    // Forward message to next filter
+                    // Forward message to next filter and ultimately the application
                     nextFilter.messageReceived(session, message);
                 }
             }
 
-            // Send response to the user if we got any
+            // Send response to the client if we got any
             if (response != null) {
                 session.write(response);
 
@@ -66,7 +68,7 @@ public final class AuthenticationFilter extends IoFilterAdapter {
                     session.close(false); // Let the response get sent first
                 }
 
-                // Notify listeners about some types of account messages
+                // Notify listeners about some types of account message responses
                 if (response instanceof LoginSuccessMessage) {
                     // Login ok, store account name in session
                     storeUserSession(session, ((LoginSuccessMessage)message).getUserName());

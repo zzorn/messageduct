@@ -180,6 +180,8 @@ public class MinaServerNetworking implements ServerNetworking {
         if (isStarted()) throw new IllegalStateException("Networking has already been started, can not start again.");
 
         if (accountService == null) throw new IllegalStateException("No accountService specified.  Set one in the constructor or with setAccountService");
+        allowedClasses.addAll(accountService.getHandledMessageTypes());
+        allowedClasses.addAll(accountService.getOtherAcceptedClasses());
 
         // Setup acceptor that will handle incoming connection attempts
         acceptor = new NioSocketAcceptor();

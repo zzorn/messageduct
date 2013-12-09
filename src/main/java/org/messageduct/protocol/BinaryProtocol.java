@@ -6,9 +6,6 @@ import com.esotericsoftware.kryo.io.Output;
 import org.apache.mina.core.buffer.IoBuffer;
 import org.apache.mina.core.session.IoSession;
 import org.apache.mina.filter.codec.*;
-import org.messageduct.account.messages.CreateAccountMessage;
-import org.messageduct.account.messages.ErrorMessage;
-import org.messageduct.account.messages.LoginMessage;
 
 import java.util.*;
 
@@ -92,11 +89,6 @@ public class BinaryProtocol implements ProtocolCodecFactory {
 
         // Only allow serialization of specified classes
         kryo.setRegistrationRequired(true);
-
-        // Register login and account creation messages
-        kryo.register(LoginMessage.class);
-        kryo.register(CreateAccountMessage.class);
-        kryo.register(ErrorMessage.class);
 
         // Register the allowed classes
         // NOTE: Order is important, it needs to be same on client and server.  To get an uniform order, we sort the classes by name:

@@ -4,11 +4,11 @@ import java.security.SecureRandom;
 import java.util.Random;
 
 /**
- *
+ * Security related utilities.
  */
 public final class SecurityUtils {
 
-    private static final int LOOP_COUNT = 10;
+    private static final int LOOP_COUNT = 8;
     private static Random semiSecureRandom = new SecureRandom();
     private static Random pseudoRandom = new Random();
 

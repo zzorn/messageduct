@@ -8,6 +8,8 @@ import java.util.Set;
 
 /**
  * Server side network service.
+ *
+ * NOTE: ServerNetworking does not manage AccountService - it's up to the caller to make sure the AccountService is initialized and shut down.
  */
 public interface ServerNetworking {
 

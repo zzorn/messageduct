@@ -10,6 +10,16 @@ import org.messageduct.account.model.Account;
 public interface AccountPersistence {
 
     /**
+     * Called when the application is initializing.  Can be used to connect to / load database.
+     */
+    void init();
+
+    /**
+     * Called when the application shuts down.  Close any database connections and the like.
+     */
+    void shutdown();
+
+    /**
      * @return account for the specified userName, or null if none exists.
      */
     Account getAccount(String userName);

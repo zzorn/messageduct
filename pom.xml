@@ -66,6 +66,14 @@
             <version>2.22</version>
         </dependency>
 
+        <!-- For account data storage -->
+        <dependency>
+            <groupId>org.mapdb</groupId>
+            <artifactId>mapdb</artifactId>
+            <version>0.9.7</version>
+        </dependency>
+
+
     </dependencies>
 
 

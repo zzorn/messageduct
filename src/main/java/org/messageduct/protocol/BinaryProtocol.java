@@ -12,6 +12,7 @@ import java.util.*;
 /**
  * Uses Kryo to encode classes in a binary form.
  */
+// TODO: Will there be issues if the session is used from many threads?  Pass in a multithreaded serializer instead
 public class BinaryProtocol implements ProtocolCodecFactory {
 
     private static final String BINARY_ENCODER = "BINARY_ENCODER";

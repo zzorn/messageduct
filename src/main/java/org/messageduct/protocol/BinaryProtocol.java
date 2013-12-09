@@ -6,11 +6,11 @@ import com.esotericsoftware.kryo.io.Output;
 import org.apache.mina.core.buffer.IoBuffer;
 import org.apache.mina.core.session.IoSession;
 import org.apache.mina.filter.codec.*;
-import org.messageduct.message.CreateAccountMessage;
-import org.messageduct.message.ErrorMessage;
-import org.messageduct.message.LoginMessage;
+import org.messageduct.account.messages.CreateAccountMessage;
+import org.messageduct.account.messages.ErrorMessage;
+import org.messageduct.account.messages.LoginMessage;
 
-import java.util.List;
+import java.util.*;
 
 /**
  * Uses Kryo to encode classes in a binary form.
@@ -20,34 +20,43 @@ public class BinaryProtocol implements ProtocolCodecFactory {
     private static final String BINARY_ENCODER = "BINARY_ENCODER";
     private static final String BINARY_DECODER = "BINARY_DECODER";
 
+    private static final Comparator<Class> CLASS_NAME_COMPARATOR = new Comparator<Class>() {
+        @Override public int compare(Class o1, Class o2) {
+            return o1.getName().compareTo(o2.getName());
+        }
+    };
+
     private final int startBufferSizeKb;
     private final int maxBufferSizeKb;
-    private final List<Class> allowedClasses;
+    private final List<Class> allowedClasses = new ArrayList<Class>();
 
     /**
      * Creates a BinaryProtocol with a 1kb initial object output buffer size, up to a maximum of 16 kb.
      *
      * @param allowedClasses the classes that are allowed to be serialized and transferred over the network.
+     * NOTE: It's important that the server and client have exactly the same allowed classes!
      */
-    public BinaryProtocol(List<Class> allowedClasses) {
+    public BinaryProtocol(Set<Class> allowedClasses) {
         this(allowedClasses, 1,  16);
     }
 
     /**
      * @param allowedClasses the classes that are allowed to be serialized and transferred over the network.
+     * NOTE: It's important that the server and client have exactly the same allowed classes!
      * @param bufferSizeKb object serialization output buffer size in kilobytes.
      */
-    public BinaryProtocol(List<Class> allowedClasses, int bufferSizeKb) {
+    public BinaryProtocol(Set<Class> allowedClasses, int bufferSizeKb) {
         this(allowedClasses, bufferSizeKb,  bufferSizeKb);
     }
 
     /**
      * @param allowedClasses the classes that are allowed to be serialized and transferred over the network.
+     * NOTE: It's important that the server and client have exactly the same allowed classes!
      * @param startBufferSizeKb initial object output buffer size in kilobytes.
      * @param maxBufferSizeKb maximum object output buffer size in kilobytes.
      */
-    public BinaryProtocol(List<Class> allowedClasses, final int startBufferSizeKb, final int maxBufferSizeKb) {
-        this.allowedClasses = allowedClasses;
+    public BinaryProtocol(Set<Class> allowedClasses, final int startBufferSizeKb, final int maxBufferSizeKb) {
+        this.allowedClasses.addAll(allowedClasses);
         this.startBufferSizeKb = startBufferSizeKb;
         this.maxBufferSizeKb = maxBufferSizeKb;
     }
@@ -90,6 +99,8 @@ public class BinaryProtocol implements ProtocolCodecFactory {
         kryo.register(ErrorMessage.class);
 
         // Register the allowed classes
+        // NOTE: Order is important, it needs to be same on client and server.  To get an uniform order, we sort the classes by name:
+        Collections.sort(allowedClasses, CLASS_NAME_COMPARATOR);
         for (Class allowedClass : allowedClasses) {
             kryo.register(allowedClass);
         }

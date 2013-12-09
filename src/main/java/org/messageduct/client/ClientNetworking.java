@@ -8,7 +8,8 @@ import org.apache.mina.filter.codec.ProtocolEncoder;
 /**
  *
  */
-public class ClientNetworking  {
+public interface ClientNetworking  {
 
+// TODO
 
 }

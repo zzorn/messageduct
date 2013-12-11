@@ -1,4 +1,4 @@
-package org.messageduct.account.impl;
+package org.messageduct.account;
 
 import org.messageduct.account.messages.*;
 import org.messageduct.account.model.Account;

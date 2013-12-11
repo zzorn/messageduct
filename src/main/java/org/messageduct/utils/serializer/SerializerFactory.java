@@ -1,5 +1,7 @@
 package org.messageduct.utils.serializer;
 
+import java.util.Collection;
+
 /**
  * Factory for creating serializers.
  */

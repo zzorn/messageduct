@@ -146,8 +146,8 @@ public class MinaServerNetworking extends ServiceBase implements ServerNetworkin
         executor = createThreadPool();
         filterChain.addLast("executor", new ExecutorFilter(executor));
 
+        // Encrypt/decrypt traffic on the connection if encryption is enabled
         if (networkConfig.isEncryptionEnabled()) {
-            // Encrypt/decrypt traffic on the connection
             SslContextFactory sslContextFactory = new SslContextFactory();
             final SslFilter sslFilter;
             try {
@@ -160,8 +160,8 @@ public class MinaServerNetworking extends ServiceBase implements ServerNetworkin
             filterChain.addLast("encryption", sslFilter);
         }
 
+        // Compress/decompress traffic if compression is enabled
         if (networkConfig.isCompressionEnabled()) {
-            // Compress/decompress traffic
             filterChain.addLast("compress", new CompressionFilter());
         }
 

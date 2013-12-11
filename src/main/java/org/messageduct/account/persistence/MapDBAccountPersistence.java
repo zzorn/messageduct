@@ -5,6 +5,7 @@ import org.mapdb.DB;
 import org.mapdb.DBMaker;
 import org.mapdb.HTreeMap;
 import org.messageduct.account.model.Account;
+import org.messageduct.utils.service.ServiceBase;
 
 import java.io.File;
 
@@ -14,14 +15,12 @@ import static org.flowutils.Check.notNull;
 /**
  * AccountPersistence implemented with MapDB.
  */
-public final class MapDBAccountPersistence implements AccountPersistence {
+public final class MapDBAccountPersistence extends ServiceBase implements AccountPersistence {
 
     public static final String ACCOUNTS_TABLE_NAME = "Accounts";
 
     private final DB db;
     private HTreeMap<String, Account> accounts;
-    private boolean initialized = false;
-    private boolean shutdown = false;
 
     /**
      * Connects to a non-encrypted account database.
@@ -64,35 +63,33 @@ public final class MapDBAccountPersistence implements AccountPersistence {
         this.db = db;
     }
 
-    @Override public void init() {
-        if (initialized) throw new IllegalStateException("Already initialized");
-        initialized = true;
 
+    @Override protected void doInit() {
         // Open accounts map
         accounts = db.getHashMap(ACCOUNTS_TABLE_NAME);
     }
 
-    @Override public void shutdown() {
-        shutdown = true;
+    @Override protected void doShutdown() {
+        // Close database
         db.close();
     }
 
     @Override public Account getAccount(String userName) {
-        checkInitialized();
+        ensureActive();
         Check.nonEmptyString(userName, "userName");
 
         return accounts.get(userName);
     }
 
     @Override public boolean hasAccount(String userName) {
-        checkInitialized();
+        ensureActive();
         Check.nonEmptyString(userName, "userName");
 
         return accounts.containsKey(userName);
     }
 
     @Override public boolean createAccount(String userName, Account account) {
-        checkInitialized();
+        ensureActive();
         Check.nonEmptyString(userName, "userName");
         Check.notNull(account, "account");
 
@@ -107,7 +104,7 @@ public final class MapDBAccountPersistence implements AccountPersistence {
     }
 
     @Override public boolean updateAccount(String userName, Account account) {
-        checkInitialized();
+        ensureActive();
         Check.nonEmptyString(userName, "userName");
         Check.notNull(account, "account");
 
@@ -122,7 +119,7 @@ public final class MapDBAccountPersistence implements AccountPersistence {
     }
 
     @Override public boolean deleteAccount(String userName) {
-        checkInitialized();
+        ensureActive();
         Check.nonEmptyString(userName, "userName");
 
         final Account oldValue = accounts.remove(userName);
@@ -135,8 +132,4 @@ public final class MapDBAccountPersistence implements AccountPersistence {
         else return false;
     }
 
-    private void checkInitialized() {
-        if (!initialized) throw new IllegalStateException(this.getClass().getSimpleName() + " is not yet initialized!  Call init before calling other methods!");
-        if (shutdown) throw new IllegalStateException(this.getClass().getSimpleName() + " is already shot down!  Can not call any methods after shutdown has been called!");
-    }
 }

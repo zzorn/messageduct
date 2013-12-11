@@ -1,13 +1,14 @@
 package org.messageduct.account.persistence;
 
 import org.messageduct.account.model.Account;
+import org.messageduct.utils.service.Service;
 
 /**
  * Interface for storage services required by the AccountService.
  *
  * Should allow multi-threaded access.
  */
-public interface AccountPersistence {
+public interface AccountPersistence extends Service {
 
     /**
      * Called when the application is initializing.  Can be used to connect to / load database.

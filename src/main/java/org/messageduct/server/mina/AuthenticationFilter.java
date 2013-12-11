@@ -1,4 +1,4 @@
-package org.messageduct.server.minaserver;
+package org.messageduct.server.mina;
 
 import org.apache.mina.core.filterchain.IoFilterAdapter;
 import org.apache.mina.core.session.IoSession;
@@ -37,7 +37,7 @@ public final class AuthenticationFilter extends IoFilterAdapter {
                 }
                 else {
                     // All other messages require that we are logged in
-                    response = new ErrorMessage("Unauthorized message", "The message " +message.getClass().getSimpleName() + " is not supported when not logged in.  Please log in first.", true);
+                    response = new AccountErrorMessage("Unauthorized message", "The message " +message.getClass().getSimpleName() + " is not supported when not logged in.  Please log in first.", true);
                 }
             }
             else {
@@ -46,7 +46,7 @@ public final class AuthenticationFilter extends IoFilterAdapter {
                     AccountMessage accountMessage = (AccountMessage) message;
                     if (!userSession.getUserName().equals(accountMessage.getUsername())) {
                         // Something wrong if username doesn't match session
-                        response = new ErrorMessage("WrongUsername", "The username in the message ("+accountMessage.getUsername()+") " +
+                        response = new AccountErrorMessage("WrongUsername", "The username in the message ("+accountMessage.getUsername()+") " +
                                                                      "did not match with the logged in username ("+userSession.getUserName()+")", true);
                     } else {
                         // Forward message to account service for handling
@@ -101,12 +101,12 @@ public final class AuthenticationFilter extends IoFilterAdapter {
         session.setAttribute(USER_SESSION, new MinaUserSession(session, username));
     }
 
-    protected void sendError(IoSession ioSession, ErrorMessage errorMessage) {
+    protected void sendError(IoSession ioSession, AccountErrorMessage accountErrorMessage) {
         // TODO: Log
-        System.out.println("Authentication error in session "+ioSession+": " + errorMessage);
+        System.out.println("Authentication error in session "+ioSession+": " + accountErrorMessage);
 
         // Send error message to client
-        ioSession.write(errorMessage);
+        ioSession.write(accountErrorMessage);
 
         // Close the session on error
         ioSession.close(false);

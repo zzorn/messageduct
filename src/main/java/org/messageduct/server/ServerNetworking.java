@@ -13,6 +13,7 @@ import java.util.Set;
  * NOTE: ServerNetworking does not manage AccountService - it's up to the caller to make sure the AccountService is initialized and shut down.
  */
 // TODO: Separate banlist into own class? (For easier save & load, as well as more complicated logic, e.g. timed or permanent bans)
+// TODO: Add support for a generic server info message that is sent when connected but not logged in, that has a server name & description and motd, and where application can subclass it to include relevant metadata.
 public interface ServerNetworking extends Service {
 
     /**

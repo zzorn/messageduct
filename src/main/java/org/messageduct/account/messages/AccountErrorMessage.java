@@ -1,22 +1,22 @@
 package org.messageduct.account.messages;
 
 /**
- * Message indicating some error condition, usually sent from server to client.
+ * Message indicating some error condition related to account actions, sent from server to client.
  */
-public final class ErrorMessage implements AccountResponseMessage {
+public final class AccountErrorMessage implements AccountResponseMessage {
     private final String errorType;
     private final String errorMessage;
     private final boolean closeConnection;
 
-    public ErrorMessage(String errorType) {
+    public AccountErrorMessage(String errorType) {
         this(errorType, null);
     }
 
-    public ErrorMessage(String errorType, String errorMessage) {
+    public AccountErrorMessage(String errorType, String errorMessage) {
         this(errorType, errorMessage, false);
     }
 
-    public ErrorMessage(String errorType, String errorMessage, boolean closeConnection) {
+    public AccountErrorMessage(String errorType, String errorMessage, boolean closeConnection) {
         this.errorType = errorType;
         this.errorMessage = errorMessage;
         this.closeConnection = closeConnection;

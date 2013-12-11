@@ -1,4 +1,4 @@
-package org.messageduct.client;
+package org.messageduct.client.account;
 
 import org.flowutils.Symbol;
 

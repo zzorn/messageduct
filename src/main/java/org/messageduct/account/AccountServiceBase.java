@@ -1,8 +1,8 @@
 package org.messageduct.account;
 
+import org.messageduct.account.messages.AccountErrorMessage;
 import org.messageduct.account.messages.AccountMessage;
 import org.messageduct.account.messages.AccountResponseMessage;
-import org.messageduct.account.messages.ErrorMessage;
 
 import java.util.Map;
 import java.util.Set;
@@ -31,7 +31,7 @@ public abstract class AccountServiceBase implements AccountService {
             return messageHandler.handleMessage(accountMessage);
         }
         else {
-            return new ErrorMessage("UnknownMessage", "The account message "+accountMessage.getClass() + " is not supported", true);
+            return new AccountErrorMessage("UnknownMessage", "The account message "+accountMessage.getClass() + " is not supported", true);
         }
 
     }

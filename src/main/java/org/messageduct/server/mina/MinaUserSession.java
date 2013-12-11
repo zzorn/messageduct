@@ -1,4 +1,4 @@
-package org.messageduct.server.minaserver;
+package org.messageduct.server.mina;
 
 import org.apache.mina.core.session.IoSession;
 import org.flowutils.Check;

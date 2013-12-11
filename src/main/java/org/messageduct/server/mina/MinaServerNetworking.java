@@ -1,22 +1,19 @@
-package org.messageduct.server.minaserver;
+package org.messageduct.server.mina;
 
 import org.apache.mina.core.filterchain.DefaultIoFilterChainBuilder;
 import org.apache.mina.core.service.IoAcceptor;
 import org.apache.mina.core.session.IdleStatus;
-import org.apache.mina.filter.codec.ProtocolCodecFilter;
-import org.apache.mina.filter.compression.CompressionFilter;
 import org.apache.mina.filter.executor.ExecutorFilter;
 import org.apache.mina.filter.executor.OrderedThreadPoolExecutor;
 import org.apache.mina.filter.firewall.BlacklistFilter;
 import org.apache.mina.filter.firewall.ConnectionThrottleFilter;
 import org.apache.mina.filter.firewall.Subnet;
-import org.apache.mina.filter.ssl.SslContextFactory;
-import org.apache.mina.filter.ssl.SslFilter;
 import org.apache.mina.transport.socket.nio.NioSocketAcceptor;
 import org.messageduct.account.AccountService;
 import org.messageduct.account.DefaultAccountService;
 import org.messageduct.account.persistence.MapDBAccountPersistence;
 import org.messageduct.common.NetworkConfig;
+import org.messageduct.common.mina.MinaFilterChainBuilder;
 import org.messageduct.server.MessageListener;
 import org.messageduct.server.ServerNetworking;
 import org.messageduct.utils.service.ServiceBase;
@@ -146,27 +143,8 @@ public class MinaServerNetworking extends ServiceBase implements ServerNetworkin
         executor = createThreadPool();
         filterChain.addLast("executor", new ExecutorFilter(executor));
 
-        // Encrypt/decrypt traffic on the connection if encryption is enabled
-        if (networkConfig.isEncryptionEnabled()) {
-            SslContextFactory sslContextFactory = new SslContextFactory();
-            final SslFilter sslFilter;
-            try {
-                sslFilter = new SslFilter(sslContextFactory.newInstance());
-            } catch (Exception e) {
-                throw new IllegalStateException("Could not create encryption filter for networking: " + e.getMessage(), e);
-            }
-            sslFilter.setUseClientMode(false);
-            sslFilter.setNeedClientAuth(true);
-            filterChain.addLast("encryption", sslFilter);
-        }
-
-        // Compress/decompress traffic if compression is enabled
-        if (networkConfig.isCompressionEnabled()) {
-            filterChain.addLast("compress", new CompressionFilter());
-        }
-
-        // Encode/Decode traffic between Java Objects and binary data
-        filterChain.addLast("codec", new ProtocolCodecFilter(new SerializerProtocol(networkConfig.getSerializer())));
+        // Build the filterchain parts that are common to client and server (encryption, compression, serialization).
+        MinaFilterChainBuilder.buildCommonFilters(networkConfig, filterChain);
 
         // Ensure authentication is done when a connection is initialized before passing messages on
         // Also handles account related actions such as password resets or email changes.

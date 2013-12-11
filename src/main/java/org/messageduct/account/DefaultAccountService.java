@@ -188,8 +188,8 @@ public class DefaultAccountService extends AccountServiceBase {
         return passwordHasher;
     }
 
-    private ErrorMessage createErrorResponse(final String type, final String message, final boolean closeConnection) {
-        return new ErrorMessage(type, message, closeConnection);
+    private AccountErrorMessage createErrorResponse(final String type, final String message, final boolean closeConnection) {
+        return new AccountErrorMessage(type, message, closeConnection);
     }
 
 

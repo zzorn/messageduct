@@ -1,7 +1,7 @@
 package org.messageduct.client;
 
+import org.messageduct.account.messages.AccountErrorMessage;
 import org.messageduct.account.messages.CreateAccountSuccessMessage;
-import org.messageduct.account.messages.ErrorMessage;
 import org.messageduct.account.messages.LoginSuccessMessage;
 
 /**
@@ -25,7 +25,7 @@ public interface ServerListener {
     void onConnected(ServerSession serverSession);
 
     /**
-     * Called when a connection is disconnected to the server.
+     * Called when a connection is disconnected from the server.
      *
      * @param serverSession the session to the server.  Now disconnected.
      */
@@ -53,18 +53,18 @@ public interface ServerListener {
     void onAccountCreated(ServerSession serverSession, CreateAccountSuccessMessage createAccountSuccessMessage);
 
     /**
-     * Called when there was some error message from the server.
+     * Called when there was some account related error message from the server.
      *
      * @param serverSession the session to the server.  Can be used for sending messages, disconnecting, etc.
      */
-    void onErrorMessage(ServerSession serverSession, ErrorMessage errorMessage);
+    void onAccountErrorMessage(ServerSession serverSession, AccountErrorMessage accountErrorMessage);
 
     /**
      * Called when there was some communication error or the like.
      *
      * @param serverSession the session to the server.  Can be used for sending messages, disconnecting, etc.
      */
-    void onError(ServerSession serverSession, Exception e);
+    void onException(ServerSession serverSession, Throwable e);
 
 
 }

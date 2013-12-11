@@ -147,7 +147,7 @@ public class DefaultNetworkConfig implements NetworkConfig {
                                LoginSuccessMessage.class,
                                CreateAccountMessage.class,
                                CreateAccountSuccessMessage.class,
-                               ErrorMessage.class);
+                               AccountErrorMessage.class);
 
         /* TODO: Uncomment when implemented
         registerAllowedClasses(DeleteAccountRequestMessage.class,

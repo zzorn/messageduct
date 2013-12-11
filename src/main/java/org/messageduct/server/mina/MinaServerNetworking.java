@@ -32,9 +32,7 @@ import static org.flowutils.Check.notNull;
 public class MinaServerNetworking extends ServiceBase implements ServerNetworking {
 
     public static final int DEFAULT_BUFFER_SIZE = 8 * 1024;
-    public static final int DEFAULT_IDLE_TIME_SECONDS = 30;
 
-    private final int idleTimeSeconds;
     private final int bufferSize;
 
     private final NetworkConfig networkConfig;
@@ -58,7 +56,7 @@ public class MinaServerNetworking extends ServiceBase implements ServerNetworkin
 
 
     /**
-     * Creates a new server networking handler, with a default buffer size and a idle time.
+     * Creates a new server networking handler, with a default buffer size.
      *
      * @param networkConfig connection specific configuration.
      * @param accountService used for authenticating users and creating new accounts.
@@ -68,37 +66,22 @@ public class MinaServerNetworking extends ServiceBase implements ServerNetworkin
     }
 
     /**
-     * Creates a new server networking handler, with a default buffer size.
-     *
-     * @param networkConfig connection specific configuration.
-     * @param accountService used for authenticating users and creating new accounts.
-     * @param bufferSize Input buffer size.
-     */
-    public MinaServerNetworking(NetworkConfig networkConfig, AccountService accountService, int bufferSize) {
-        this(networkConfig, accountService, bufferSize, DEFAULT_IDLE_TIME_SECONDS);
-    }
-
-    /**
      * Creates a new server networking handler.
      *
      * @param networkConfig connection specific configuration.
      * @param accountService used for authenticating users and creating new accounts.
      * @param bufferSize Input buffer size.
-     * @param idleTimeSeconds time before connection handlers are notified that the connection is idle.
      */
     public MinaServerNetworking(NetworkConfig networkConfig,
                                 AccountService accountService,
-                                int bufferSize,
-                                int idleTimeSeconds) {
+                                int bufferSize) {
         notNull(networkConfig, "networkConfig");
         notNull(accountService, "accountService");
         positive(bufferSize, "bufferSize");
-        positive(idleTimeSeconds, "idleTimeSeconds");
 
         this.networkConfig = networkConfig;
         this.accountService = accountService;
         this.bufferSize = bufferSize;
-        this.idleTimeSeconds = idleTimeSeconds;
     }
 
     @Override public final void addMessageListener(MessageListener listener) {
@@ -115,7 +98,7 @@ public class MinaServerNetworking extends ServiceBase implements ServerNetworkin
         // Set buffer size used for incoming messages
         acceptor.getSessionConfig().setReadBufferSize(bufferSize);
         // Set time after witch idle is called on the connection handler.
-        acceptor.getSessionConfig().setIdleTime(IdleStatus.BOTH_IDLE, idleTimeSeconds);
+        acceptor.getSessionConfig().setIdleTime(IdleStatus.WRITER_IDLE, networkConfig.getIdleTimeSeconds());
 
         // Set up chain of filters to apply to incoming and outgoing messages
         initializeFilterChain(acceptor.getFilterChain());

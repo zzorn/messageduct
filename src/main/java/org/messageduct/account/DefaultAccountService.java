@@ -15,6 +15,7 @@ import static org.flowutils.Check.notNull;
  *
  * Can be extended if more complex Account objects are desired, or additional account related messages needed.
  */
+// TODO: Should the account service contain the account persistence, and handle its lifecycle as well?
 public class DefaultAccountService extends AccountServiceBase {
 
     private final AccountPersistence accountPersistence;

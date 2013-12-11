@@ -5,6 +5,7 @@ import org.flowutils.Symbol;
 /**
  *
  */
+// TODO
 public interface AccountInfo {
 
     Symbol getServerId();

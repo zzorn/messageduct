@@ -8,7 +8,7 @@ import org.flowutils.Check;
 public final class BCryptPasswordHasher implements PasswordHasher {
 
     private static final int DEFAULT_LOG_OF_SALT_ROUNDS = 12;
-    private static final int MINIMUM_LOG_OF_SALT_ROUNDS = 10;
+    private static final int MINIMUM_LOG_OF_SALT_ROUNDS = 8;
 
     private final int logOfSaltRounds;
 

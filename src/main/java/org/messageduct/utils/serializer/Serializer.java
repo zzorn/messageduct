@@ -28,6 +28,11 @@ public interface Serializer {
     void setRequireRegistration(boolean allowAllClasses);
 
     /**
+     * Register commonly used collection classes as allowed.
+     */
+    void registerCommonCollectionClasses();
+
+    /**
      * Must be called before the first call to serialize or deserialize.  Should not be called afterward.
      * @param allowedClasses add classes that are allowed to be serialized by this serializer.
      */
@@ -92,4 +97,10 @@ public interface Serializer {
      */
     <T> T deserialize(Class<T> expectedType, InputStream inputStream);
 
+    /**
+     * Register a class to allow based on its fully qualified name.
+     * This allows registering classes that are private inner classes and thus not accessible in other ways.
+     * @param className fully qualified name of class to register.
+     */
+    void registerAllowedClass(String className);
 }

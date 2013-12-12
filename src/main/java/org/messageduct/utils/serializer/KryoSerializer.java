@@ -121,6 +121,9 @@ public final class KryoSerializer extends SerializerBase {
     }
 
     @Override protected byte[] doSerialize(Object object) {
+        // Clear buffer to deserialize to
+        outputBuffer.clear();
+
         // Serialize the object
         kryo.writeClassAndObject(outputBuffer, object);
 

@@ -71,11 +71,31 @@ public abstract class SerializerBase implements Serializer {
         this.requireRegistration = requireRegistration;
     }
 
+    @Override public void registerCommonCollectionClasses() {
+        registerAllowedClasses(ArrayList.class,
+                               LinkedList.class,
+                               HashMap.class,
+                               HashSet.class,
+                               LinkedHashMap.class,
+                               LinkedHashSet.class);
+    }
+
     @Override public final void registerAllowedClass(Class allowedClass) {
         checkNotInitialized();
         notNull(allowedClass, "allowedClass");
 
         allowedClasses.add(allowedClass);
+    }
+
+    @Override public final void registerAllowedClass(String className) {
+        checkNotInitialized();
+        notNull(className, "className");
+
+        try {
+            registerAllowedClass(Class.forName(className));
+        } catch (ClassNotFoundException e) {
+            throw new IllegalArgumentException("No class named '"+className+"' found: " + e.getMessage(), e);
+        }
     }
 
     @Override public final void registerAllowedClasses(Class... allowedClasses) {

@@ -5,9 +5,6 @@ import static org.junit.Assert.*;
 import org.junit.Test;
 import org.messageduct.utils.ThreadUtils;
 
-/**
- *
- */
 public class ThreadUtilsTest {
     @Test
     public void testGetCallingMethodName() throws Exception {

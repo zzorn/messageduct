@@ -65,7 +65,6 @@ public class DefaultNetworkConfig implements NetworkConfig {
         registerAllowedClasses(allowedClasses);
 
         // Register classes allowed by default
-        registerPrimitiveTypes();
         registerCollectionTypes();
         registerAccountManagementClasses();
     }
@@ -157,27 +156,6 @@ public class DefaultNetworkConfig implements NetworkConfig {
                                PasswordResetExecuteMessage.class,
                                ChangePasswordMessage.class);
         */
-    }
-
-    protected void registerPrimitiveTypes() {
-        registerAllowedClasses(Boolean.class,
-                               Byte.class,
-                               Short.class,
-                               Integer.class,
-                               Long.class,
-                               Float.class,
-                               Double.class,
-                               Character.class,
-                               String.class);
-
-        registerAllowedClasses(Boolean.TYPE,
-                               Byte.TYPE,
-                               Short.TYPE,
-                               Integer.TYPE,
-                               Long.TYPE,
-                               Float.TYPE,
-                               Double.TYPE,
-                               Character.TYPE);
     }
 
     protected void registerCollectionTypes() {

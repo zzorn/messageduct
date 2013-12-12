@@ -9,6 +9,7 @@ import org.messageduct.utils.serializer.Serializer;
 import org.messageduct.utils.serializer.SerializerFactory;
 
 import java.util.*;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class SerializerTest {
 
@@ -46,6 +47,8 @@ public class SerializerTest {
 
     private void assertSerializerWorksConcurrently(final Serializer serializer) {
 
+        final AtomicBoolean failed = new AtomicBoolean(false);
+
         // Run the serializer test with the specified serializer in many threads at the same time
         List<Thread> threads = new ArrayList<Thread>();
         for (int i = 0; i < 10; i++) {
@@ -58,6 +61,12 @@ public class SerializerTest {
             });
             threads.add(thread);
             thread.setDaemon(true);
+            thread.setUncaughtExceptionHandler(new Thread.UncaughtExceptionHandler() {
+                @Override public void uncaughtException(Thread t, Throwable e) {
+                    failed.set(true);
+                    e.printStackTrace();
+                }
+            });
             thread.start();
         }
 
@@ -68,6 +77,10 @@ public class SerializerTest {
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
+        }
+
+        if (failed.get()) {
+            fail("Exception when serializing in multiple threads at the same time");
         }
 
     }

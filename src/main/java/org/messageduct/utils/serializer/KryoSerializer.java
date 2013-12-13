@@ -5,6 +5,7 @@ import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
 import org.flowutils.Check;
 
+import java.io.DataInput;
 import java.io.InputStream;
 import java.util.*;
 

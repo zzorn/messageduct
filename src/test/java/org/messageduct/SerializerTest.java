@@ -47,43 +47,14 @@ public class SerializerTest {
 
     private void assertSerializerWorksConcurrently(final Serializer serializer) {
 
-        final AtomicBoolean failed = new AtomicBoolean(false);
-
-        // Run the serializer test with the specified serializer in many threads at the same time
-        List<Thread> threads = new ArrayList<Thread>();
-        for (int i = 0; i < 10; i++) {
-            Thread thread = new Thread(new Runnable() {
-                @Override public void run() {
-                    for (int j = 0; j < 10000; j++) {
-                        assertSerializerWorks(serializer);
-                    }
-                }
-            });
-            threads.add(thread);
-            thread.setDaemon(true);
-            thread.setUncaughtExceptionHandler(new Thread.UncaughtExceptionHandler() {
-                @Override public void uncaughtException(Thread t, Throwable e) {
-                    failed.set(true);
-                    e.printStackTrace();
-                }
-            });
-            thread.start();
-        }
-
-        // Wait for all threads to finish
-        for (Thread thread : threads) {
-            try {
-                thread.join();
-            } catch (InterruptedException e) {
-                e.printStackTrace();
+        TestUtils.testConcurrently("Multiple threads should be able to serialize at the same time", 10, 10000, new TestRun() {
+            @Override public void run() throws Exception {
+                assertSerializerWorks(serializer);
             }
-        }
-
-        if (failed.get()) {
-            fail("Exception when serializing in multiple threads at the same time");
-        }
+        });
 
     }
+
 
     private void assertSerializerWorks(Serializer serializer) {
 

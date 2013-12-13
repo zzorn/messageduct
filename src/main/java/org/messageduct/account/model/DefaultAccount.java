@@ -13,6 +13,13 @@ public class DefaultAccount implements Account {
     private String publicKey;
     private String bitcoinAddress;
 
+    /**
+     * Only used by serialization.
+     */
+    private DefaultAccount() {
+        userName = null;
+    }
+
     public DefaultAccount(String userName, String passwordHash) {
         this(userName, passwordHash, null);
     }
@@ -48,4 +55,6 @@ public class DefaultAccount implements Account {
     @Override public String getBitcoinAddress() {
         return bitcoinAddress;
     }
+
+
 }

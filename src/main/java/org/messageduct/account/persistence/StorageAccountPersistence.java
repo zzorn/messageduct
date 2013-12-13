@@ -18,6 +18,15 @@ public final class StorageAccountPersistence extends MemoryAccountPersistence {
     private final Storage storage;
 
     /**
+     * Creates a new FileStorage backed AccountPersistence with no encryption.
+     *
+     * @param storageFile file to store the accounts in.
+     */
+    public StorageAccountPersistence(File storageFile) {
+        this(storageFile, null);
+    }
+
+    /**
      * Creates a new FileStorage backed AccountPersistence.
      *
      * @param storageFile file to store the accounts in.

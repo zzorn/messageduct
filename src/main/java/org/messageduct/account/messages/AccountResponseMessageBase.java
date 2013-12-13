@@ -18,4 +18,10 @@ public abstract class AccountResponseMessageBase implements AccountResponseMessa
     public final String getUserName() {
         return userName;
     }
+
+    @Override public String toString() {
+        return getClass().getSimpleName() + "{" +
+               "userName='" + userName + '\'' +
+               '}';
+    }
 }

@@ -14,8 +14,9 @@ import static org.flowutils.Check.notNull;
  * A default implementation of the account service.
  *
  * Can be extended if more complex Account objects are desired, or additional account related messages needed.
+ *
+ * Calls init and shutdown for the provided AccountPersistence, if they have not already been called before.
  */
-// TODO: Should the account service contain the account persistence, and handle its lifecycle as well?
 public class DefaultAccountService extends AccountServiceBase {
 
     private final AccountPersistence accountPersistence;
@@ -57,75 +58,84 @@ public class DefaultAccountService extends AccountServiceBase {
         registerDefaultHandlers();
     }
 
+    @Override protected void doInit() {
+        if (!accountPersistence.isInitialized()) accountPersistence.init();
+    }
+
+    @Override protected void doShutdown() {
+        if (!accountPersistence.isShutdown()) accountPersistence.shutdown();
+
+    }
+
     protected void registerDefaultHandlers() {
 
-        registerHandler(CreateAccountMessage.class, createNewAccountHandler());
-        registerHandler(LoginMessage.class, createLoginHandler());
+        registerHandler(CreateAccountMessage.class, new AccountMessageHandler<CreateAccountMessage>() {
+            @Override public AccountResponseMessage handleMessage(CreateAccountMessage message) {
+                return createAccount(message);
+            }
+        });
+        registerHandler(LoginMessage.class, new AccountMessageHandler<LoginMessage>() {
+            @Override public AccountResponseMessage handleMessage(LoginMessage message) {
+                return login(message);
+            }
+        });
 
         // TODO: Register other handlers
     }
 
-    protected AccountMessageHandler<CreateAccountMessage> createNewAccountHandler() {
-        return new AccountMessageHandler<CreateAccountMessage>() {
-            @Override public AccountResponseMessage handleMessage(CreateAccountMessage message) {
+    protected AccountResponseMessage createAccount(CreateAccountMessage message) {
+        // Check if new users are allowed
+        if (!isNewUsersAllowed()) return createErrorResponse("NoNewUsersAccepted", "Currently no new users are accepted", true);
 
-                // Check if new users are allowed
-                if (!isNewUsersAllowed()) return createErrorResponse("NoNewUsersAccepted", "Currently no new users are accepted", true);
+        // Check that login is allowed (creating an account automatically logs you in as well)
+        if (!isLoginAllowed()) return createErrorResponse("LoginDisabled", "Login is currently disabled.  Check back later.", true);
 
-                // Check that login is allowed (creating an account automatically logs you in as well)
-                if (!isLoginAllowed()) return createErrorResponse("LoginDisabled", "Login is currently disabled.  Check back later.", true);
+        // Check that the username is valid
+        final String username = message.getUsername();
+        final String usernameError = userNameValidator.check(username);
+        if (usernameError != null) return createErrorResponse("InvalidUsername", usernameError, false);
 
-                // Check that the username is valid
-                final String username = message.getUsername();
-                final String usernameError = userNameValidator.check(username);
-                if (usernameError != null) return createErrorResponse("InvalidUsername", usernameError, false);
+        // Check that the username is free
+        if (accountPersistence.hasAccount(username)) return createErrorResponse("UsernameTaken", "The username '"+username+"' is already taken by someone else", false);
 
-                // Check that the username is free
-                if (accountPersistence.hasAccount(username)) return createErrorResponse("UsernameTaken", "The username '"+username+"' is already taken by someone else", false);
+        // Check that the password is ok
+        final String passwordError = passwordValidator.check(message.getPassword(), username);
+        if (passwordError != null) return createErrorResponse("InvalidPassword", passwordError, false);
 
-                // Check that the password is ok
-                final String passwordError = passwordValidator.check(message.getPassword(), username);
-                if (passwordError != null) return createErrorResponse("InvalidPassword", passwordError, false);
+        // Create password hash
+        String passwordHash = passwordHasher.hashPassword(message.getPassword());
 
-                // Create password hash
-                String passwordHash = passwordHasher.hashPassword(message.getPassword());
+        // The password is no longer needed in cleartext, so overwrite it with random characters
+        message.scrubPassword();
 
-                // The password is no longer needed in cleartext, so overwrite it with random characters
-                message.scrubPassword();
+        // Create the account object
+        final Account account = createNewAccountObject(message, passwordHash);
+        if (account == null) return createErrorResponse("AccountCreationError", "Could not create the account for some reason", true);
 
-                // Create the account object
-                final Account account = createNewAccountObject(message, passwordHash);
-                if (account == null) return createErrorResponse("AccountCreationError", "Could not create the account for some reason", true);
+        // Try to reserve the username and save the account object (an other thread might have taken the username meanwhile)
+        if (!accountPersistence.createAccount(username, account)) return createErrorResponse("AccountStorageError", "There was some problem when saving the account, try again", false);
 
-                // Try to reserve the username and save the account object (an other thread might have taken the username meanwhile)
-                if (!accountPersistence.createAccount(username, account)) return createErrorResponse("AccountStorageError", "There was some problem when saving the account, try again", false);
-
-                // The account was created successfully
-                return new CreateAccountSuccessMessage(username);
-            }
-        };
+        // The account was created successfully
+        return new CreateAccountSuccessMessage(username);
     }
 
-    protected AccountMessageHandler<LoginMessage> createLoginHandler() {
-        return new AccountMessageHandler<LoginMessage>() {
-            @Override public AccountResponseMessage handleMessage(LoginMessage message) {
+    protected  AccountResponseMessage login(LoginMessage message) {
+        // Check that login is allowed (creating an account automatically logs you in as well)
+        if (!isLoginAllowed()) return createErrorResponse("LoginDisabled", "Login is currently disabled.  Check back later.", true);
 
-                // Check that login is allowed (creating an account automatically logs you in as well)
-                if (!isLoginAllowed()) return createErrorResponse("LoginDisabled", "Login is currently disabled.  Check back later.", true);
+        // Get user
+        final String username = message.getUsername();
+        final Account account = accountPersistence.getAccount(username);
+        if (account == null) return createErrorResponse("UnknownUsername", "No account found for username '"+username+"'", false);
 
-                // Get user
-                final String username = message.getUsername();
-                final Account account1 = accountPersistence.getAccount(username);
-                if (account1 == null) return createErrorResponse("UnknownUsername", "No account found for username '"+username+"'", false);
+        // Check password
+        if (!passwordHasher.isCorrectPassword(message.getPassword(), account.getPasswordHash())) {
+            return createErrorResponse("InvalidPassword", "The password was incorrect", true);
+        }
+        message.scrubPassword();
 
-                // Check password
-                if (!passwordHasher.isCorrectPassword(message.getPassword(), account1.getPasswordHash())) return createErrorResponse("InvalidPassword", "The password was incorrect", true);
-                message.scrubPassword();
-
-                // Login succeeded
-                return new LoginSuccessMessage(username);
-            }
-        };
+        // Login succeeded
+        return new LoginSuccessMessage(username);
     }
 
     /**

@@ -1,10 +1,8 @@
 package org.messageduct;
 
-import org.mapdb.Atomic;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static org.junit.Assert.fail;

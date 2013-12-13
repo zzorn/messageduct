@@ -2,6 +2,7 @@ package org.messageduct.account;
 
 import org.messageduct.account.messages.AccountMessage;
 import org.messageduct.account.messages.AccountResponseMessage;
+import org.messageduct.utils.service.Service;
 
 
 /**
@@ -9,7 +10,7 @@ import org.messageduct.account.messages.AccountResponseMessage;
  *
  * Should support concurrent calls to its methods.
  */
-public interface AccountService {
+public interface AccountService extends Service {
 
     /**
      * Handle the specified AccountMessage.

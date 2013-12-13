@@ -3,11 +3,9 @@ package org.messageduct;
 import static org.junit.Assert.*;
 
 import org.junit.Test;
-import org.mapdb.DBMaker;
 import org.messageduct.account.model.Account;
 import org.messageduct.account.model.DefaultAccount;
 import org.messageduct.account.persistence.AccountPersistence;
-import org.messageduct.account.persistence.MapDBAccountPersistence;
 import org.messageduct.account.persistence.MemoryAccountPersistence;
 import org.messageduct.account.persistence.StorageAccountPersistence;
 

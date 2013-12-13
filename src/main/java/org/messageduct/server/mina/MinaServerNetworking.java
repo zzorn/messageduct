@@ -11,7 +11,7 @@ import org.apache.mina.filter.firewall.Subnet;
 import org.apache.mina.transport.socket.nio.NioSocketAcceptor;
 import org.messageduct.account.AccountService;
 import org.messageduct.account.DefaultAccountService;
-import org.messageduct.account.persistence.MapDBAccountPersistence;
+import org.messageduct.account.persistence.StorageAccountPersistence;
 import org.messageduct.common.NetworkConfig;
 import org.messageduct.common.mina.MinaFilterChainBuilder;
 import org.messageduct.server.MessageListener;
@@ -46,14 +46,26 @@ public class MinaServerNetworking extends ServiceBase implements ServerNetworkin
 
     /**
      * Creates a new server networking handler, with a default buffer size, idle time, and account service.
+     * Stores accounts in a file without encryption.
      *
      * @param networkConfig connection specific configuration.
      * @param accountDatabaseFile file to store the account database in.
      */
     public MinaServerNetworking(NetworkConfig networkConfig, File accountDatabaseFile) {
-        this(networkConfig, new DefaultAccountService(new MapDBAccountPersistence(accountDatabaseFile)));
+        this(networkConfig, accountDatabaseFile, null);
     }
 
+    /**
+     * Creates a new server networking handler, with a default buffer size, idle time, and account service.
+     * Stores accounts in a file, optionally password protected.
+     *
+     * @param networkConfig connection specific configuration.
+     * @param accountDatabaseFile file to store the account database in.
+     * @param accountDatabasePassword password to use for encrypting the account database, or null to leave it unencrypted.
+     */
+    public MinaServerNetworking(NetworkConfig networkConfig, File accountDatabaseFile, char[] accountDatabasePassword) {
+        this(networkConfig, new DefaultAccountService(new StorageAccountPersistence(accountDatabaseFile, accountDatabasePassword)));
+    }
 
     /**
      * Creates a new server networking handler, with a default buffer size.

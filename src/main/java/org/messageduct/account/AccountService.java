@@ -19,4 +19,11 @@ public interface AccountService extends Service {
      */
     AccountResponseMessage handleMessage(AccountMessage accountMessage);
 
+    /**
+     * Creates a new account with the specified username and password.
+     * Provided as an alternative to sending an AccountCreationMessage, for use e.g. in unit tests.
+     * @param userName username to create an account for.
+     * @param password the password to use.  This field will not be scrubbed.
+     */
+    void createAccount(String userName, char[] password);
 }

@@ -1,6 +1,5 @@
 package org.messageduct.client;
 
-import org.flowutils.Symbol;
 import org.messageduct.account.messages.CreateAccountMessage;
 import org.messageduct.client.serverinfo.ServerInfo;
 
@@ -26,7 +25,7 @@ public interface ServerSession {
      * @param accountName account name.
      * @param password password for the account.
      */
-    void login(Symbol accountName, char[] password);
+    void login(String accountName, char[] password);
 
     /**
      * Initiates an account creation request.
@@ -35,7 +34,7 @@ public interface ServerSession {
      * @param accountName desired account name.
      * @param password password for the account.
      */
-    void createAccount(Symbol accountName, char[] password);
+    void createAccount(String accountName, char[] password);
 
     /**
      * Initiates an account creation request.
@@ -45,7 +44,7 @@ public interface ServerSession {
      * @param password password for the account.
      * @param email email to use for password recovery and updates.
      */
-    void createAccount(Symbol accountName, char[] password, String email);
+    void createAccount(String accountName, char[] password, String email);
 
     /**
      * Initiates an account creation request.
@@ -89,7 +88,7 @@ public interface ServerSession {
     /**
      * @return the account we are logged in as, or trying to log in as, or null if not yet specified.
      */
-    Symbol getAccountName();
+    String getAccountName();
 
 
 }

@@ -1,20 +1,16 @@
 package org.messageduct.utils.encryption;
 
 import org.apache.commons.codec.binary.Base64;
-import org.flowutils.Check;
-import org.messageduct.utils.ByteArrayUtils;
 
-import javax.xml.bind.DatatypeConverter;
 import java.nio.charset.Charset;
 
-import static org.flowutils.Check.*;
 import static org.flowutils.Check.notNull;
 
 /**
  * Implements encryption and decryption of strings using the encryption and decryption of byte arrays.
  * Also implements a way to check whether a decryption password was correct.
  */
-public abstract class EncryptionProviderBase implements EncryptionProvider {
+public abstract class SymmetricEncryptionProviderBase implements SymmetricEncryptionProvider {
 
     private static final Charset CHARSET = Charset.forName("UTF8");
 
@@ -28,7 +24,7 @@ public abstract class EncryptionProviderBase implements EncryptionProvider {
     /**
      * Creates a EncryptionProviderBase with the default password verification prefix.
      */
-    protected EncryptionProviderBase() {
+    protected SymmetricEncryptionProviderBase() {
         this(DEFAULT_PASSWORD_VERIFICATION_PREFIX);
     }
 
@@ -39,9 +35,8 @@ public abstract class EncryptionProviderBase implements EncryptionProvider {
      *                                   to make it possible to check whether decryption was successful.
      *                                   If null, no prefix is added, and no password verification is done.
      *                                   Make sure you use the same prefix when encoding and decoding data.
-     *
      */
-    protected EncryptionProviderBase(byte[] passwordVerificationPrefix) {
+    protected SymmetricEncryptionProviderBase(byte[] passwordVerificationPrefix) {
         this.passwordVerificationPrefix = passwordVerificationPrefix;
     }
 
@@ -50,9 +45,7 @@ public abstract class EncryptionProviderBase implements EncryptionProvider {
         notNull(password, "password");
 
         // Add password verification prefix if specified
-        if (passwordVerificationPrefix != null) {
-            plaintextData = ByteArrayUtils.concatenateByteArrays(passwordVerificationPrefix, plaintextData);
-        }
+        plaintextData = EncryptionUtils.addPasswordVerificationPrefix(plaintextData, passwordVerificationPrefix);
 
         // Encrypt data
         return doEncrypt(plaintextData, password);
@@ -65,19 +58,8 @@ public abstract class EncryptionProviderBase implements EncryptionProvider {
         // Decrypt data
         byte[] decryptedData = doDecrypt(encryptedData, password);
 
-        // Check password verification prefix if specified
-        if (passwordVerificationPrefix != null) {
-            // Check length
-            if (decryptedData.length < passwordVerificationPrefix.length) throw new WrongPasswordException("Wrong password or corrupted data, decrypted data too short for password verification string.");
-
-            // Check prefix
-            for (int i = 0; i < passwordVerificationPrefix.length; i++) {
-                if (decryptedData[i] != passwordVerificationPrefix[i]) throw new WrongPasswordException("Wrong password or corrupted data, password verification string mismatch at character number "+i+"");
-            }
-
-            // Remove the prefix from the data
-            decryptedData = ByteArrayUtils.removeArrayPrefix(decryptedData, passwordVerificationPrefix.length);
-        }
+        // Verify the password and remove the verification prefix.
+        decryptedData = EncryptionUtils.verifyPasswordVerificationPrefix(decryptedData, passwordVerificationPrefix, "password");
 
         return decryptedData;
     }

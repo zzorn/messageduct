@@ -4,7 +4,7 @@ import org.flowutils.Check;
 import org.messageduct.account.messages.*;
 import org.messageduct.utils.serializer.ConcurrentSerializer;
 import org.messageduct.utils.serializer.ConcurrentSerializerWrapper;
-import org.messageduct.utils.serializer.Serializer;
+import org.messageduct.utils.serializer.KryoSerializer;
 
 import java.util.*;
 
@@ -25,6 +25,7 @@ public class DefaultNetworkConfig implements NetworkConfig {
     private int port;
     private boolean encryptionEnabled;
     private boolean compressionEnabled;
+    private boolean messageLoggingEnabled;
     private int idleTimeSeconds;
     private ConcurrentSerializer serializer;
 
@@ -36,7 +37,13 @@ public class DefaultNetworkConfig implements NetworkConfig {
      * @param allowedClasses zero or more classes that are allowed to be sent over the network.
      */
     public DefaultNetworkConfig(Class... allowedClasses) {
-        this(DEFAULT_PORT, true, true, DEFAULT_IDLE_TIME_SECONDS, new ConcurrentSerializerWrapper(Serializer.class), Arrays.asList(allowedClasses));
+        this(DEFAULT_PORT,
+             true,
+             true,
+             false,
+             DEFAULT_IDLE_TIME_SECONDS,
+             new ConcurrentSerializerWrapper(KryoSerializer.class),
+             Arrays.asList(allowedClasses));
     }
 
 
@@ -46,6 +53,7 @@ public class DefaultNetworkConfig implements NetworkConfig {
      * @param port the port that the server listens to.
      * @param encryptionEnabled if true, the connection will be encrypted.
      * @param compressionEnabled if true, the connection will be compressed.
+     * @param messageLoggingEnabled if true, messages sent or received over the connection will be logged.  Defaults to false.
      * @param idleTimeSeconds number of seconds after which an idle event is triggered.
      * @param serializer a thread safe serializer that is used to serialize and deserialize messages sent over the network.
      * @param allowedClasses the classes that are allowed to be sent over the network.
@@ -54,17 +62,19 @@ public class DefaultNetworkConfig implements NetworkConfig {
     public DefaultNetworkConfig(int port,
                                 boolean encryptionEnabled,
                                 boolean compressionEnabled,
-                                int idleTimeSeconds,
+                                boolean messageLoggingEnabled, int idleTimeSeconds,
                                 ConcurrentSerializer serializer,
                                 Collection<Class> allowedClasses) {
         this.port = port;
         this.encryptionEnabled = encryptionEnabled;
         this.compressionEnabled = compressionEnabled;
+        this.messageLoggingEnabled = messageLoggingEnabled;
         setIdleTimeSeconds(idleTimeSeconds);
         this.serializer = serializer;
         registerAllowedClasses(allowedClasses);
 
         // Register classes allowed by default
+        registerPrimitiveTypes();
         registerCollectionTypes();
         registerAccountManagementClasses();
     }
@@ -92,6 +102,14 @@ public class DefaultNetworkConfig implements NetworkConfig {
 
     @Override public void setCompressionEnabled(boolean compressionEnabled) {
         this.compressionEnabled = compressionEnabled;
+    }
+
+    @Override public boolean isMessageLoggingEnabled() {
+        return messageLoggingEnabled;
+    }
+
+    @Override public void setMessageLoggingEnabled(boolean messageLoggingEnabled) {
+        this.messageLoggingEnabled = messageLoggingEnabled;
     }
 
     @Override public ConcurrentSerializer getSerializer() {
@@ -139,6 +157,17 @@ public class DefaultNetworkConfig implements NetworkConfig {
         for (Class aClass : classes) {
             registerAllowedClass(aClass);
         }
+    }
+
+    protected void registerPrimitiveTypes() {
+        registerAllowedClasses(char[].class,
+                               boolean[].class,
+                               byte[].class,
+                               short[].class,
+                               int[].class,
+                               long[].class,
+                               float[].class,
+                               double[].class);
     }
 
     protected void registerAccountManagementClasses() {

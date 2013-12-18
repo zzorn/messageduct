@@ -8,12 +8,10 @@ import org.bouncycastle.crypto.modes.CBCBlockCipher;
 import org.bouncycastle.crypto.paddings.*;
 import org.bouncycastle.crypto.params.KeyParameter;
 import org.bouncycastle.crypto.params.ParametersWithIV;
-import org.bouncycastle.jce.provider.BouncyCastleProvider;
 
 import javax.crypto.*;
 import javax.crypto.spec.PBEKeySpec;
 import javax.crypto.spec.SecretKeySpec;
-import java.security.Security;
 import java.util.Arrays;
 
 import static org.flowutils.Check.*;
@@ -21,13 +19,12 @@ import static org.flowutils.Check.*;
 /**
  * Implementation of EncryptionProvider that uses the Java cryptography API.
  */
-public final class CipherEncryptionProvider extends EncryptionProviderBase {
+public final class AesSymmetricEncryptionProvider extends SymmetricEncryptionProviderBase {
 
     static {
-        // Register Bouncy Castle encryption methods
-        // Needed to get the key hash algorithm
-        Security.addProvider(new BouncyCastleProvider());
+        EncryptionUtils.installBouncyCastleProviderIfNotInstalled();
     }
+
 
     /**
      * Just a randomly picked SALT.
@@ -55,7 +52,7 @@ public final class CipherEncryptionProvider extends EncryptionProviderBase {
     /**
      * Creates a cipher based encryption provider using a default salt and password verification sequence.
      */
-    public CipherEncryptionProvider() {
+    public AesSymmetricEncryptionProvider() {
         this(DEFAULT_SALT);
     }
 
@@ -64,7 +61,7 @@ public final class CipherEncryptionProvider extends EncryptionProviderBase {
      *
      * @param salt salt to mix with the password.
      */
-    public CipherEncryptionProvider(byte[] salt) {
+    public AesSymmetricEncryptionProvider(byte[] salt) {
         this(salt, DEFAULT_PASSWORD_VERIFICATION_PREFIX);
     }
 
@@ -75,7 +72,7 @@ public final class CipherEncryptionProvider extends EncryptionProviderBase {
      * @param passwordVerificationPrefix a fixed sequence that is added to the plaintext before encrypting,
      *                                   to make it possible to check whether decryption was successful.
      */
-    public CipherEncryptionProvider(byte[] salt, byte[] passwordVerificationPrefix) {
+    public AesSymmetricEncryptionProvider(byte[] salt, byte[] passwordVerificationPrefix) {
         super(passwordVerificationPrefix);
         notNull(salt, "salt");
 

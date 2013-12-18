@@ -1,9 +1,9 @@
 package org.messageduct.utils.storage;
 
 import org.messageduct.utils.StreamUtils;
+import org.messageduct.utils.encryption.AesSymmetricEncryptionProvider;
 import org.messageduct.utils.encryption.WrongPasswordException;
-import org.messageduct.utils.encryption.CipherEncryptionProvider;
-import org.messageduct.utils.encryption.EncryptionProvider;
+import org.messageduct.utils.encryption.SymmetricEncryptionProvider;
 import org.messageduct.utils.serializer.KryoSerializer;
 import org.messageduct.utils.serializer.Serializer;
 
@@ -24,7 +24,7 @@ public final class FileStorage extends SynchronizedStorage {
     private final File tempFile;
 
     private final Serializer serializer;
-    private final EncryptionProvider encryptionProvider;
+    private final SymmetricEncryptionProvider symmetricEncryptionProvider;
     private final char[] password;
 
 
@@ -55,7 +55,7 @@ public final class FileStorage extends SynchronizedStorage {
      * @param serializer serializer used to serialize the object saved.
      */
     public FileStorage(File file, char[] password, Serializer serializer) {
-        this(file, password, serializer, new CipherEncryptionProvider(), createTempFileName(file));
+        this(file, password, serializer, new AesSymmetricEncryptionProvider(), createTempFileName(file));
     }
 
     /**
@@ -64,11 +64,11 @@ public final class FileStorage extends SynchronizedStorage {
      * @param file file to save the data to.
      * @param password password to use for encrypting the file.  If null, no encryption is done.
      * @param serializer serializer used to serialize the object saved.
-     * @param encryptionProvider encryption provider to use for encrypting the file, or null if no encryption should be done.
+     * @param symmetricEncryptionProvider encryption provider to use for encrypting the file, or null if no encryption should be done.
      *                           If a non-null password is provided, an encryptionProvider has to be provided.
      */
-    public FileStorage(File file, char[] password, Serializer serializer, EncryptionProvider encryptionProvider) {
-        this(file, password, serializer, encryptionProvider, createTempFileName(file));
+    public FileStorage(File file, char[] password, Serializer serializer, SymmetricEncryptionProvider symmetricEncryptionProvider) {
+        this(file, password, serializer, symmetricEncryptionProvider, createTempFileName(file));
     }
 
     /**
@@ -77,21 +77,21 @@ public final class FileStorage extends SynchronizedStorage {
      * @param file file to save the data to.
      * @param password password to use for encrypting the file.  If null, no encryption is done.
      * @param serializer serializer used to serialize the object saved.
-     * @param encryptionProvider encryption provider to use for encrypting the file, or null if no encryption should be done.
+     * @param symmetricEncryptionProvider encryption provider to use for encrypting the file, or null if no encryption should be done.
      *                           If a non-null password is provided, an encryptionProvider has to be provided.
      * @param tempFile temporary file to save to first, to avoid corruption if there is a problem in the middle of saving.
      *                 By default the same name as the datafile, except with a ".temp" appended.
      */
-    public FileStorage(File file, char[] password, Serializer serializer, EncryptionProvider encryptionProvider, File tempFile) {
+    public FileStorage(File file, char[] password, Serializer serializer, SymmetricEncryptionProvider symmetricEncryptionProvider, File tempFile) {
         notNull(file, "file");
         notNull(tempFile, "tempFile");
         notNull(serializer, "serializer");
-        if (password != null && encryptionProvider == null) throw new IllegalArgumentException("If a password is provided, an encryptionProvider has to be given as well, but encryptionProvider was null");
+        if (password != null && symmetricEncryptionProvider == null) throw new IllegalArgumentException("If a password is provided, an encryptionProvider has to be given as well, but encryptionProvider was null");
 
         this.file = file;
         this.tempFile = tempFile;
         this.serializer = serializer;
-        this.encryptionProvider = encryptionProvider;
+        this.symmetricEncryptionProvider = symmetricEncryptionProvider;
         this.password = password;
     }
 
@@ -100,8 +100,8 @@ public final class FileStorage extends SynchronizedStorage {
         byte[] data = serializer.serialize(object);
 
         // Encrypt if we have a password
-        if (encryptionProvider != null && password != null) {
-            data = encryptionProvider.encrypt(data, password);
+        if (symmetricEncryptionProvider != null && password != null) {
+            data = symmetricEncryptionProvider.encrypt(data, password);
         }
 
         // Save to temp file
@@ -158,9 +158,9 @@ public final class FileStorage extends SynchronizedStorage {
         }
 
         // Decrypt if we have password specified
-        if (encryptionProvider != null && password != null) {
+        if (symmetricEncryptionProvider != null && password != null) {
             try {
-                data = encryptionProvider.decrypt(data, password);
+                data = symmetricEncryptionProvider.decrypt(data, password);
             } catch (WrongPasswordException e) {
                 throw new IOException("Wrong password used for attempting to decrypt the storage: " + e.getMessage(), e);
             }

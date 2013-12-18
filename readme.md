@@ -3,7 +3,7 @@ Messageduct
 
 High level Java networking library with accounts and login handling, as well as Java object serialization.
 Uses whitelists to specify what object types are allowed to be transmitted over the network.
-Encrypts and compresses network traffic by default.  Plan to implement several systems for password recovery.
+Encrypts and compresses network traffic by default.  There are also plans to implement systems for password recovery.
 
 In general the library is very configurable if desired, with sane defaults out of the box.
 Interfaces are used liberally, and you can easily implement your own version of most sub-services and functionality.
@@ -16,7 +16,7 @@ Under development, no released versions yet.
 TODO:
 * Complete full unit testing.
 * Account recovery on lost password not implemented yet, might make it a plugable system if it's easy to do.
-* Some refactoring, move common utilities to flowutils.
+* Some refactoring, move common utilities to the flowutils library.
 * Write documentation and example.
 
 

@@ -2,7 +2,6 @@ package org.messageduct.client;
 
 import org.apache.mina.util.ConcurrentHashSet;
 import org.flowutils.Check;
-import org.flowutils.Symbol;
 import org.messageduct.account.messages.*;
 import org.messageduct.client.serverinfo.ServerInfo;
 import org.messageduct.utils.ThreadUtils;
@@ -22,7 +21,7 @@ public abstract class ServerSessionBase implements ServerSession {
     private final Deque<Object> queuedMessages = new ConcurrentLinkedDeque<Object>();
 
     private final ServerInfo serverInfo;
-    private Symbol accountName = null;
+    private String accountName = null;
 
     private boolean connectCalled = false;
     private boolean disconnectCalled = false;
@@ -58,32 +57,35 @@ public abstract class ServerSessionBase implements ServerSession {
         }
     }
 
-    @Override public final void login(Symbol accountName, char[] password) {
+    @Override public final void login(String accountName, char[] password) {
+
+        System.out.println("ServerSessionBase.login");
+
         ensureNotDisconnected();
         if (loggedIn) throw new IllegalStateException("Already logged in with account name " + this.accountName +", can not log in with account '" + accountName +"'");
         this.accountName = accountName;
 
         // Send login message
-        sendMessage(new LoginMessage(accountName.getName(), password));
+        sendMessage(new LoginMessage(accountName, password));
 
         // Call connect if not already done
         if (!connectCalled) connect();
     }
 
-    @Override public final void createAccount(Symbol accountName, char[] password) {
+    @Override public final void createAccount(String accountName, char[] password) {
         ensureNotDisconnected();
-        createAccount(new CreateAccountMessage(accountName.getName(), password));
+        createAccount(new CreateAccountMessage(accountName, password));
     }
 
-    @Override public final void createAccount(Symbol accountName, char[] password, String email) {
+    @Override public final void createAccount(String accountName, char[] password, String email) {
         ensureNotDisconnected();
-        createAccount(new CreateAccountMessage(accountName.getName(), password, email));
+        createAccount(new CreateAccountMessage(accountName, password, email));
     }
 
     @Override public final void createAccount(CreateAccountMessage createAccountMessage) {
         ensureNotDisconnected();
         if (loggedIn) throw new IllegalStateException("Already logged in with account name " + this.accountName +", can not create a new account named '" + accountName + "'");
-        this.accountName = Symbol.get(createAccountMessage.getUsername());
+        this.accountName = createAccountMessage.getUsername();
 
         // Send account creation
         sendMessage(createAccountMessage);
@@ -95,16 +97,20 @@ public abstract class ServerSessionBase implements ServerSession {
     @Override public final void sendMessage(Object message) {
         Check.notNull(message, "message");
 
+        System.out.println("ServerSessionBase.sendMessage " + message);
+
         // Queue messages if we are not connected
         if (!isConnected()) {
+            System.out.println("   queued"  );
             queuedMessages.add(message);
         }
         else {
+            System.out.println("   sent"  );
             doSendMessage(message);
         }
     }
 
-    @Override public final Symbol getAccountName() {
+    @Override public final String getAccountName() {
         return accountName;
     }
 
@@ -153,6 +159,7 @@ public abstract class ServerSessionBase implements ServerSession {
      * Call when a connection is established to the server, but not necessarily yet logged in.
      */
     protected final void onConnected() {
+        System.out.println("ServerSessionBase.onConnected");
         connected = true;
 
         for (ServerListener listener : listeners) {
@@ -160,8 +167,10 @@ public abstract class ServerSessionBase implements ServerSession {
         }
 
         // Send queued messages
+        System.out.println("Sending queued messages: " + queuedMessages.size());
         Object message = queuedMessages.poll();
         while (message != null) {
+            System.out.println("   message = " + message);
             doSendMessage(message);
             message = queuedMessages.poll();
         }
@@ -224,6 +233,12 @@ public abstract class ServerSessionBase implements ServerSession {
      * Call when there was some communication error or the like.
      */
     protected final void onException(Throwable e) {
+        // TODO: DEBUG, remove
+        System.out.println("ServerSessionBase.onException");
+        System.out.println("e = " + e);
+        e.printStackTrace();
+
+
         for (ServerListener listener : listeners) {
             listener.onException(this, e);
         }

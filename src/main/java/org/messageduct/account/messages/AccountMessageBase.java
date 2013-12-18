@@ -1,8 +1,12 @@
 package org.messageduct.account.messages;
 
+import org.flowutils.Check;
 import org.messageduct.utils.SecurityUtils;
 
 import java.util.Arrays;
+
+import static org.flowutils.Check.*;
+import static org.flowutils.Check.notNull;
 
 /**
  * Base class for account messages that contain a user name and password.
@@ -18,6 +22,9 @@ public abstract class AccountMessageBase implements AccountMessage {
      *                 after passed in if it is not needed anymore.
      */
     protected AccountMessageBase(String username, char[] password) {
+        nonEmptyString(username, "username");
+        notNull(password, "password");
+
         this.username = username;
 
         // Get a copy of the password chars, the caller is responsible of scrubbing the password passed in if desired.
@@ -42,5 +49,11 @@ public abstract class AccountMessageBase implements AccountMessage {
     @Override protected void finalize() throws Throwable {
         scrubPassword();
         super.finalize();
+    }
+
+    @Override public String toString() {
+        return getClass().getSimpleName() + "{" +
+               "username='" + username + '\'' +
+               '}';
     }
 }

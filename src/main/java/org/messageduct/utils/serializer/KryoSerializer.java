@@ -3,6 +3,8 @@ package org.messageduct.utils.serializer;
 import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
+import com.esotericsoftware.shaded.org.objenesis.strategy.SerializingInstantiatorStrategy;
+import com.esotericsoftware.shaded.org.objenesis.strategy.StdInstantiatorStrategy;
 import org.flowutils.Check;
 
 import java.io.DataInput;
@@ -17,8 +19,8 @@ import static org.flowutils.Check.notNull;
  */
 public final class KryoSerializer extends SerializerBase {
 
-    public static final int DEFAULT_INITIAL_BUFFER_SIZE = 1024;
-    public static final int DEFAULT_MAX_BUFFER_SIZE = -1;
+    public static final int DEFAULT_INITIAL_BUFFER_SIZE = 1024*4;
+    public static final int DEFAULT_MAX_BUFFER_SIZE = 1024*10;
 
     private final Kryo kryo;
     private final int initialBufferSizeBytes;
@@ -116,9 +118,13 @@ public final class KryoSerializer extends SerializerBase {
             kryo.register(registeredClass);
         }
 
+        // Allow creating objects without zero arg constructors
+        kryo.setInstantiatorStrategy(new StdInstantiatorStrategy());
+
         // Create buffers
         outputBuffer = new Output(initialBufferSizeBytes, maximumBufferSizeBytes);
-        inputBuffer = new Input();
+        inputBuffer = new Input(maximumBufferSizeBytes);
+
     }
 
     @Override protected byte[] doSerialize(Object object) {

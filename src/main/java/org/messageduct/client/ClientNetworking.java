@@ -13,55 +13,55 @@ public interface ClientNetworking extends Service {
     /**
      * Connect to the specified server.
      *
-     * @param listener listener that is notified about messages from the server, and connect / disconnect events.
      * @param serverInfo contains the server internet address and port.
+     * @param listener listener that is notified about messages from the server, and connect / disconnect events.
      * @return session that can be used to send messages to the server.
      */
-    ServerSession connect(ServerListener listener, ServerInfo serverInfo);
+    ServerSession connect(ServerInfo serverInfo, ServerListener listener);
 
     /**
      * Connect to the specified server, and attempt to log in to an existing account.
      *
-     * @param listener listener that is notified about messages from the server, and connect / disconnect events.
      * @param serverInfo contains the server internet address and port.
      * @param accountName name of account to log into.
      * @param password password for the account.
+     * @param listener listener that is notified about messages from the server, and connect / disconnect events.
      * @return session that can be used to send messages to the server.
      */
-    ServerSession login(ServerListener listener, ServerInfo serverInfo, Symbol accountName, char[] password);
+    ServerSession login(ServerInfo serverInfo, String accountName, char[] password, ServerListener listener);
 
     /**
      * Connect to the specified server, and attempt to create a new account.
      *
-     * @param listener listener that is notified about messages from the server, and connect / disconnect events.
      * @param serverInfo contains the server internet address and port.
      * @param accountName account name for the new account.
      * @param password password for the new account.
+     * @param listener listener that is notified about messages from the server, and connect / disconnect events.
      * @return session that can be used to send messages to the server.
      */
-    ServerSession createAccount(ServerListener listener, ServerInfo serverInfo, Symbol accountName, char[] password);
+    ServerSession createAccount(ServerInfo serverInfo, String accountName, char[] password, ServerListener listener);
 
     /**
      * Connect to the specified server, and attempt to create a new account.
      *
-     * @param listener listener that is notified about messages from the server, and connect / disconnect events.
      * @param serverInfo contains the server internet address and port.
      * @param accountName account name for the new account.
      * @param password password for the new account.
      * @param email email to use for password recovery and updates.
+     * @param listener listener that is notified about messages from the server, and connect / disconnect events.
      * @return session that can be used to send messages to the server.
      */
-    ServerSession createAccount(ServerListener listener, ServerInfo serverInfo, Symbol accountName, char[] password, String email);
+    ServerSession createAccount(ServerInfo serverInfo, String accountName, char[] password, String email, ServerListener listener);
 
     /**
      * Connect to the specified server, and attempt to create a new account.
      *
-     * @param listener listener that is notified about messages from the server, and connect / disconnect events.
      * @param serverInfo contains the server internet address and port.
      * @param createAccountMessage account creation details.
+     * @param listener listener that is notified about messages from the server, and connect / disconnect events.
      * @return session that can be used to send messages to the server.
      */
-    ServerSession createAccount(ServerListener listener, ServerInfo serverInfo, CreateAccountMessage createAccountMessage);
+    ServerSession createAccount(ServerInfo serverInfo, CreateAccountMessage createAccountMessage, ServerListener listener);
 
 
 

@@ -94,4 +94,14 @@ public interface NetworkConfig {
      * @param idleTimeSeconds number of seconds after an idle event is triggered.
      */
     void setIdleTimeSeconds(int idleTimeSeconds);
+
+    /**
+     * @return if true, messages sent or received over the connection will be logged.  Defaults to false.
+     */
+    boolean isMessageLoggingEnabled();
+
+    /**
+     * @param messageLoggingEnabled if true, messages sent or received over the connection will be logged.
+     */
+    void setMessageLoggingEnabled(boolean messageLoggingEnabled);
 }

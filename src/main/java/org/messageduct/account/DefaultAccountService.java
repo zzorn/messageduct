@@ -6,6 +6,7 @@ import org.messageduct.account.model.DefaultAccount;
 import org.messageduct.account.persistence.AccountPersistence;
 import org.messageduct.utils.*;
 
+import java.util.Arrays;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import static org.flowutils.Check.notNull;
@@ -81,6 +82,14 @@ public class DefaultAccountService extends AccountServiceBase {
         });
 
         // TODO: Register other handlers
+    }
+
+    @Override public void createAccount(String userName, char[] password) {
+        final char[] passwordCopy = Arrays.copyOf(password, password.length);
+        final AccountResponseMessage result = createAccount(new CreateAccountMessage(userName, passwordCopy));
+        if (result instanceof AccountErrorMessage) {
+            throw new IllegalArgumentException("Could not create account for username '"+userName+"': " + result.toString());
+        }
     }
 
     protected AccountResponseMessage createAccount(CreateAccountMessage message) {

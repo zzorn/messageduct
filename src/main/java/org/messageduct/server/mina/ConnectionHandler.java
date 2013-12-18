@@ -70,7 +70,7 @@ public final class ConnectionHandler extends IoHandlerAdapter implements IoHandl
 
         if (userSession == null) {
             // If the user is not logged in, disconnect them when they idle
-            session.close(true);
+            session.close(false);
         }
         else {
             // If logged in let the application decide what to do
@@ -92,12 +92,19 @@ public final class ConnectionHandler extends IoHandlerAdapter implements IoHandl
 
     @Override
     public void messageReceived(IoSession session, Object message) throws Exception {
+        System.out.println("ConnectionHandler.messageReceived");
+        System.out.println("   message = " + message);
+
         // Get UserSession of user if logged in
         final MinaUserSession userSession = AuthenticationFilter.getUserSession(session);
         if (userSession == null) {
             // We should be logged in and have a username if we are here.  If not, panic:
-            session.close(true);
-            throw new IllegalStateException("No username found in session " + session);
+            session.close(false);
+            final String errorMsg = "No username found in session " + session;
+            System.out.println("ConnectionHandler.messageReceived error");
+            System.out.println("  errorMsg = " + errorMsg);
+            //return;
+            throw new IllegalStateException(errorMsg);
         }
 
         // Handle the message

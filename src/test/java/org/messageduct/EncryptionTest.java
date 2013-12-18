@@ -3,8 +3,8 @@ package org.messageduct;
 import org.junit.Before;
 import org.junit.Test;
 import org.messageduct.utils.SecurityUtils;
-import org.messageduct.utils.encryption.CipherEncryptionProvider;
-import org.messageduct.utils.encryption.EncryptionProvider;
+import org.messageduct.utils.encryption.AesSymmetricEncryptionProvider;
+import org.messageduct.utils.encryption.SymmetricEncryptionProvider;
 import org.messageduct.utils.encryption.WrongPasswordException;
 
 import java.nio.charset.Charset;
@@ -16,11 +16,11 @@ import static org.junit.Assert.assertEquals;
 public class EncryptionTest {
 
     private static final Charset UTF_8 = Charset.forName("UTF8");
-    private EncryptionProvider encryptionProvider;
+    private SymmetricEncryptionProvider symmetricEncryptionProvider;
 
     @Before
     public void setUp() throws Exception {
-        encryptionProvider = new CipherEncryptionProvider();
+        symmetricEncryptionProvider = new AesSymmetricEncryptionProvider();
     }
 
     @Test
@@ -28,15 +28,15 @@ public class EncryptionTest {
         final String secretMessage = "Secret message: buy more doge";
         final char[] password = "nicedoge".toCharArray();
 
-        final String encryptedString = encryptionProvider.encrypt(secretMessage, password);
+        final String encryptedString = symmetricEncryptionProvider.encrypt(secretMessage, password);
         assertFalse("Should be encrypted", stringEquals(secretMessage, encryptedString));
 
-        final String decryptedString = encryptionProvider.decrypt(encryptedString, password);
+        final String decryptedString = symmetricEncryptionProvider.decrypt(encryptedString, password);
         assertTrue("Should decrypt correctly", stringEquals(secretMessage, decryptedString));
 
         // Wrong password should throw exception
         try {
-            encryptionProvider.decrypt(encryptedString, "WrongPassword".toCharArray());
+            symmetricEncryptionProvider.decrypt(encryptedString, "WrongPassword".toCharArray());
             fail("Should throw exception when decrypting with the wrong password");
         }
         catch (WrongPasswordException e) {
@@ -69,11 +69,11 @@ public class EncryptionTest {
             char[] password = createRandomString(random, passwordMaxLen).toCharArray();
 
             // Check encryption successful
-            final String encrypted = encryptionProvider.encrypt(message, password);
+            final String encrypted = symmetricEncryptionProvider.encrypt(message, password);
             assertFalse("The message " + message + " should be encrypted", stringEquals(message, encrypted));
 
             // Check decryption successful
-            String decrypted = encryptionProvider.decrypt(encrypted, password);
+            String decrypted = symmetricEncryptionProvider.decrypt(encrypted, password);
             assertTrue("The message " + message + " should decrypt correctly", stringEquals(message, decrypted));
         }
     }
@@ -93,15 +93,15 @@ public class EncryptionTest {
         final byte[] secretMessage = "Secret message: buy more doge".getBytes(UTF_8);
         final char[] password = "nicedoge".toCharArray();
 
-        final byte[] encryptedData = encryptionProvider.encrypt(secretMessage, password);
+        final byte[] encryptedData = symmetricEncryptionProvider.encrypt(secretMessage, password);
         assertFalse("Should be encrypted", byteArrayEquals(secretMessage, encryptedData));
 
-        final byte[] decryptedData = encryptionProvider.decrypt(encryptedData, password);
+        final byte[] decryptedData = symmetricEncryptionProvider.decrypt(encryptedData, password);
         assertArrayEquals("Should decrypt correctly", secretMessage, decryptedData);
 
         // Wrong password should throw exception
         try {
-            encryptionProvider.decrypt(encryptedData, "WrongPassword".toCharArray());
+            symmetricEncryptionProvider.decrypt(encryptedData, "WrongPassword".toCharArray());
             fail("Should throw exception when decrypting with the wrong password");
         }
         catch (WrongPasswordException e) {

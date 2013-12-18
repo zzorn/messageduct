@@ -1,5 +1,7 @@
 package org.messageduct.account.messages;
 
+import org.flowutils.Check;
+
 /**
  * Message sent by the client to the server to create a new account.
  */

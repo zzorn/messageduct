@@ -14,6 +14,14 @@ public class DefaultServerInfo implements ServerInfo {
     private String description;
 
     /**
+     * @param hostname hostname to connect to
+     * @param port port to connect to
+     */
+    public DefaultServerInfo(String hostname, int port) {
+        this(new InetSocketAddress(hostname, port));
+    }
+
+    /**
      * @param address internet hostname or IP address and port of the server.
      */
     public DefaultServerInfo(InetSocketAddress address) {

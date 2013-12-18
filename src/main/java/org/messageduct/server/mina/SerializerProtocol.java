@@ -43,6 +43,8 @@ public final class SerializerProtocol implements ProtocolCodecFactory {
 
         @Override
         public void encode(IoSession session, Object message, ProtocolEncoderOutput out) throws Exception {
+            System.out.println("SerializerProtocol$Encoder.encode " + message);
+
             // Serialize object
             final byte[] data = concurrentSerializer.serialize(message);
 
@@ -61,17 +63,10 @@ public final class SerializerProtocol implements ProtocolCodecFactory {
 
         @Override
         public void decode(IoSession session, IoBuffer in, ProtocolDecoderOutput out) throws Exception {
+            System.out.println("SerializerProtocol$Decoder.decode");
 
-            // Decode the message
-            final Object message;
-            if (in.hasArray()) {
-                // Buffer backed IoBuffer
-                message = concurrentSerializer.deserialize(in.array());
-            }
-            else {
-                // Stream based IoBuffer
-                message = concurrentSerializer.deserialize(in.asInputStream());
-            }
+            // Decode the message from a stream
+            final Object message = concurrentSerializer.deserialize(in.asInputStream());
 
             // Pass message to next handler
             out.write(message);

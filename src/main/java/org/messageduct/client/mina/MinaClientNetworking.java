@@ -41,7 +41,7 @@ public class MinaClientNetworking extends ServiceBase implements ClientNetworkin
         }
     }
 
-    @Override public ServerSession connect(ServerListener listener, ServerInfo serverInfo) {
+    @Override public ServerSession connect(ServerInfo serverInfo, ServerListener listener) {
         ensureActive("connect to server");
 
         final ServerSession session = createSession(serverInfo);
@@ -52,8 +52,11 @@ public class MinaClientNetworking extends ServiceBase implements ClientNetworkin
     }
 
     @Override
-    public ServerSession login(ServerListener listener, ServerInfo serverInfo, Symbol accountName, char[] password) {
+    public ServerSession login(ServerInfo serverInfo,
+                               String accountName, char[] password, ServerListener listener) {
         ensureActive("login to server");
+
+        System.out.println("MinaClientNetworking.login");
 
         final ServerSession session = createSession(serverInfo);
         session.addListener(listener);
@@ -63,26 +66,25 @@ public class MinaClientNetworking extends ServiceBase implements ClientNetworkin
     }
 
     @Override
-    public ServerSession createAccount(ServerListener listener,
-                                       ServerInfo serverInfo,
-                                       Symbol accountName,
-                                       char[] password) {
-        return createAccount(listener, serverInfo, accountName, password, null);
-    }
-
-    @Override
-    public ServerSession createAccount(ServerListener listener,
-                                       ServerInfo serverInfo,
-                                       Symbol accountName,
+    public ServerSession createAccount(ServerInfo serverInfo,
+                                       String accountName,
                                        char[] password,
-                                       String email) {
-        return createAccount(listener, serverInfo, new CreateAccountMessage(accountName.getName(), password, email));
+                                       ServerListener listener) {
+        return createAccount(serverInfo, accountName, password, null, listener);
     }
 
     @Override
-    public ServerSession createAccount(ServerListener listener,
-                                       ServerInfo serverInfo,
-                                       CreateAccountMessage createAccountMessage) {
+    public ServerSession createAccount(ServerInfo serverInfo,
+                                       String accountName,
+                                       char[] password,
+                                       String email, ServerListener listener) {
+        return createAccount(serverInfo, new CreateAccountMessage(accountName, password, email), listener);
+    }
+
+    @Override
+    public ServerSession createAccount(ServerInfo serverInfo,
+                                       CreateAccountMessage createAccountMessage,
+                                       ServerListener listener) {
         ensureActive("create account on server");
 
         final ServerSession session = createSession(serverInfo);

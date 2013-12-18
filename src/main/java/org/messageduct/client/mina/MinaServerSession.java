@@ -32,6 +32,8 @@ public class MinaServerSession extends ServerSessionBase {
     }
 
     @Override protected void doConnect() {
+        System.out.println("MinaServerSession.doConnect");
+
         if (connector != null) throw new IllegalStateException("Connect already called");
         connector = createConnector();
 
@@ -60,6 +62,8 @@ public class MinaServerSession extends ServerSessionBase {
         connectFuture.addListener(new IoFutureListener<ConnectFuture>() {
             @Override public void operationComplete(ConnectFuture future) {
                 try {
+                    System.out.println("MinaServerSession.operationComplete");
+
                     // Store session
                     session = future.getSession();
                     if (session == null) throw new IllegalStateException("Session not created even though connect future fired");
@@ -68,6 +72,9 @@ public class MinaServerSession extends ServerSessionBase {
                     onConnected();
                 }
                 catch (Throwable e) {
+                    System.out.println("MinaServerSession.operationComplete error " + e);
+                    e.printStackTrace();
+
                     // Some problem, handle
                     onException(e);
                 }
@@ -83,16 +90,19 @@ public class MinaServerSession extends ServerSessionBase {
         connector.setConnectTimeoutMillis(networkConfig.getIdleTimeSeconds() * 1000L);
 
         // Setup filters (encryption, compression, serialization)
-        MinaFilterChainBuilder.buildCommonFilters(networkConfig, connector.getFilterChain());
+        MinaFilterChainBuilder.buildCommonFilters(networkConfig, connector.getFilterChain(), true);
 
         return connector;
     }
 
     @Override protected void doSendMessage(Object message) {
+        System.out.println("MinaServerSession.doSendMessage");
         if (session == null) throw new IllegalStateException("Session not yet opened!");
 
         // Send message
+        System.out.println("  writing message = " + message);
         session.write(message);
+        System.out.println("  written");
     }
 
     @Override protected void doDisconnect() {

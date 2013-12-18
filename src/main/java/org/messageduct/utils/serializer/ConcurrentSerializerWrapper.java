@@ -24,6 +24,7 @@ public final class ConcurrentSerializerWrapper extends SerializerBase implements
      */
     public ConcurrentSerializerWrapper(final Class<? extends Serializer> serializerClass) {
         notNull(serializerClass, "serializerClass");
+        if (serializerClass.isInterface()) throw new IllegalArgumentException("The serializerClass given, "+serializerClass+", is an interface, and can not be instantiated!");
 
         // Create factory that creates new instances from the specified class
         this.serializerFactory = new SerializerFactory() {
@@ -31,7 +32,7 @@ public final class ConcurrentSerializerWrapper extends SerializerBase implements
                 try {
                     return serializerClass.newInstance();
                 } catch (Exception e) {
-                    throw new IllegalStateException("Serializer could not be created for class '"+serializerClass+"': " + e.getMessage(), e);
+                    throw new IllegalStateException("Serializer '"+serializerClass+"' could not instantiated: " +e.getClass().getSimpleName()+": " + e.getMessage() + "  " + e, e);
                 }
             }
         };

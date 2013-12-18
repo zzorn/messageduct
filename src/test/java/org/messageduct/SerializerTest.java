@@ -104,9 +104,6 @@ public class SerializerTest {
         public DummyObj nextDummy;
         public OtherDummyObj otherDummy;
 
-        private DummyObj() {
-        }
-
         private DummyObj(String name) {
             this.name = name;
         }
@@ -153,9 +150,6 @@ public class SerializerTest {
 
     private static class OtherDummyObj {
         public String name;
-
-        private OtherDummyObj() {
-        }
 
         private OtherDummyObj(String name) {
             this.name = name;

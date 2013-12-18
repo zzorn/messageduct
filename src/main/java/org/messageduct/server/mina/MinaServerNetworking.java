@@ -72,9 +72,22 @@ public class MinaServerNetworking extends ServiceBase implements ServerNetworkin
      *
      * @param networkConfig connection specific configuration.
      * @param accountService used for authenticating users and creating new accounts.
+     *                       Initialized and shutdown by MinaServerNetworking automatically when it is.
      */
     public MinaServerNetworking(NetworkConfig networkConfig, AccountService accountService) {
-        this(networkConfig, accountService, DEFAULT_BUFFER_SIZE);
+        this(networkConfig, accountService, null);
+    }
+
+    /**
+     * Creates a new server networking handler, with a default buffer size.
+     *
+     * @param networkConfig connection specific configuration.
+     * @param accountService used for authenticating users and creating new accounts.
+     * @param listener a listener that is notified about messages received from clients.
+     *                 Can be null as well, listeners can be added later with addListener.
+     */
+    public MinaServerNetworking(NetworkConfig networkConfig, AccountService accountService, MessageListener listener) {
+        this(networkConfig, accountService, listener, DEFAULT_BUFFER_SIZE);
     }
 
     /**
@@ -82,10 +95,14 @@ public class MinaServerNetworking extends ServiceBase implements ServerNetworkin
      *
      * @param networkConfig connection specific configuration.
      * @param accountService used for authenticating users and creating new accounts.
+     *                       Initialized and shutdown by MinaServerNetworking automatically when it is.
+     * @param listener a listener that is notified about messages received from clients.
+     *                 Can be null as well, listeners can be added later with addListener.
      * @param bufferSize Input buffer size.
      */
     public MinaServerNetworking(NetworkConfig networkConfig,
                                 AccountService accountService,
+                                MessageListener listener,
                                 int bufferSize) {
         notNull(networkConfig, "networkConfig");
         notNull(accountService, "accountService");
@@ -94,6 +111,10 @@ public class MinaServerNetworking extends ServiceBase implements ServerNetworkin
         this.networkConfig = networkConfig;
         this.accountService = accountService;
         this.bufferSize = bufferSize;
+
+        if (listener != null) {
+            addMessageListener(listener);
+        }
     }
 
     @Override public final void addMessageListener(MessageListener listener) {
@@ -105,6 +126,9 @@ public class MinaServerNetworking extends ServiceBase implements ServerNetworkin
     }
 
     @Override protected void doInit() {
+        // Initialize account service if needed
+        if (!accountService.isInitialized()) accountService.init();
+
         // Setup acceptor that will handle incoming connection attempts
         acceptor = new NioSocketAcceptor();
         // Set buffer size used for incoming messages
@@ -133,13 +157,15 @@ public class MinaServerNetworking extends ServiceBase implements ServerNetworkin
         // Limit rate of new connections from a single source
         filterChain.addLast("connectionThrottle", new ConnectionThrottleFilter());
 
+        /* TODO Re-enable
         // Execute incoming messages in threads from the thread pool.
         // (Note that this is not applied for outgoing messages)
         executor = createThreadPool();
         filterChain.addLast("executor", new ExecutorFilter(executor));
+*/
 
         // Build the filterchain parts that are common to client and server (encryption, compression, serialization).
-        MinaFilterChainBuilder.buildCommonFilters(networkConfig, filterChain);
+        MinaFilterChainBuilder.buildCommonFilters(networkConfig, filterChain, false);
 
         // Ensure authentication is done when a connection is initialized before passing messages on
         // Also handles account related actions such as password resets or email changes.
@@ -152,6 +178,9 @@ public class MinaServerNetworking extends ServiceBase implements ServerNetworkin
 
         // Shut down thread pool handling connections
         if (executor != null) executor.shutdown();
+
+        // Shutdown account service if needed
+        if (!accountService.isShutdown()) accountService.shutdown();
     }
 
     @Override public final void banIp(InetAddress address) {

@@ -20,6 +20,9 @@ public final class AuthenticationFilter extends IoFilterAdapter {
 
     @Override
     public void messageReceived(NextFilter nextFilter, IoSession session, Object message) throws Exception {
+        System.out.println("AuthenticationFilter.messageReceived");
+        System.out.println("  message = " + message);
+
         if (message == null) {
             // Null message not allowed
             // TODO: Log
@@ -71,14 +74,14 @@ public final class AuthenticationFilter extends IoFilterAdapter {
                 // Notify listeners about some types of account message responses
                 if (response instanceof LoginSuccessMessage) {
                     // Login ok, store account name in session
-                    storeUserSession(session, ((LoginSuccessMessage)message).getUserName());
+                    storeUserSession(session, ((LoginSuccessMessage)response).getUserName());
 
                     // Notify listeners down the chain about the login
                     nextFilter.messageReceived(session, response);
                 }
                 else if (response instanceof CreateAccountSuccessMessage) {
                     // Account creation ok, store account name in session
-                    storeUserSession(session, ((CreateAccountSuccessMessage)message).getUserName());
+                    storeUserSession(session, ((CreateAccountSuccessMessage)response).getUserName());
 
                     // Notify listeners down the chain about the account creation
                     nextFilter.messageReceived(session, response);
@@ -89,7 +92,6 @@ public final class AuthenticationFilter extends IoFilterAdapter {
                 }
             }
         }
-
     }
 
     public static MinaUserSession getUserSession(IoSession ioSession) {

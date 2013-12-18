@@ -19,7 +19,7 @@ import static org.flowutils.Check.*;
 /**
  * Implementation of EncryptionProvider that uses the Java cryptography API.
  */
-public final class AesSymmetricEncryptionProvider extends SymmetricEncryptionProviderBase {
+public final class AesEncryption extends SymmetricEncryptionBase {
 
     static {
         EncryptionUtils.installBouncyCastleProviderIfNotInstalled();
@@ -42,7 +42,7 @@ public final class AesSymmetricEncryptionProvider extends SymmetricEncryptionPro
         (byte)0xBD, (byte)0x7C, (byte)0xEB, (byte)0xE4 };
 
     private static final String KEY_HASH_ALGORITHM = "PBEWithSHA256And256BitAES-CBC-BC";
-    private static final String PROVIDER = "BC";
+    private static final String PROVIDER = "BC"; // Use bouncy castle version of algorithms
     private static final String KEY_ALGORITHM = "AES";
 
 
@@ -52,7 +52,7 @@ public final class AesSymmetricEncryptionProvider extends SymmetricEncryptionPro
     /**
      * Creates a cipher based encryption provider using a default salt and password verification sequence.
      */
-    public AesSymmetricEncryptionProvider() {
+    public AesEncryption() {
         this(DEFAULT_SALT);
     }
 
@@ -61,7 +61,7 @@ public final class AesSymmetricEncryptionProvider extends SymmetricEncryptionPro
      *
      * @param salt salt to mix with the password.
      */
-    public AesSymmetricEncryptionProvider(byte[] salt) {
+    public AesEncryption(byte[] salt) {
         this(salt, DEFAULT_PASSWORD_VERIFICATION_PREFIX);
     }
 
@@ -72,7 +72,7 @@ public final class AesSymmetricEncryptionProvider extends SymmetricEncryptionPro
      * @param passwordVerificationPrefix a fixed sequence that is added to the plaintext before encrypting,
      *                                   to make it possible to check whether decryption was successful.
      */
-    public AesSymmetricEncryptionProvider(byte[] salt, byte[] passwordVerificationPrefix) {
+    public AesEncryption(byte[] salt, byte[] passwordVerificationPrefix) {
         super(passwordVerificationPrefix);
         notNull(salt, "salt");
 

@@ -10,7 +10,7 @@ import static org.flowutils.Check.notNull;
  * Implements encryption and decryption of strings using the encryption and decryption of byte arrays.
  * Also implements a way to check whether a decryption password was correct.
  */
-public abstract class SymmetricEncryptionProviderBase implements SymmetricEncryptionProvider {
+public abstract class SymmetricEncryptionBase implements SymmetricEncryption {
 
     private static final Charset CHARSET = Charset.forName("UTF8");
 
@@ -24,7 +24,7 @@ public abstract class SymmetricEncryptionProviderBase implements SymmetricEncryp
     /**
      * Creates a EncryptionProviderBase with the default password verification prefix.
      */
-    protected SymmetricEncryptionProviderBase() {
+    protected SymmetricEncryptionBase() {
         this(DEFAULT_PASSWORD_VERIFICATION_PREFIX);
     }
 
@@ -36,7 +36,7 @@ public abstract class SymmetricEncryptionProviderBase implements SymmetricEncryp
      *                                   If null, no prefix is added, and no password verification is done.
      *                                   Make sure you use the same prefix when encoding and decoding data.
      */
-    protected SymmetricEncryptionProviderBase(byte[] passwordVerificationPrefix) {
+    protected SymmetricEncryptionBase(byte[] passwordVerificationPrefix) {
         this.passwordVerificationPrefix = passwordVerificationPrefix;
     }
 

@@ -3,11 +3,11 @@ package org.messageduct;
 import org.junit.Before;
 import org.junit.Test;
 import org.messageduct.utils.SecurityUtils;
-import org.messageduct.utils.encryption.AesSymmetricEncryptionProvider;
-import org.messageduct.utils.encryption.SymmetricEncryptionProvider;
-import org.messageduct.utils.encryption.WrongPasswordException;
+import org.messageduct.utils.encryption.*;
 
 import java.nio.charset.Charset;
+import java.security.KeyPair;
+import java.security.PublicKey;
 import java.util.Random;
 
 import static org.junit.Assert.*;
@@ -16,11 +16,14 @@ import static org.junit.Assert.assertEquals;
 public class EncryptionTest {
 
     private static final Charset UTF_8 = Charset.forName("UTF8");
-    private SymmetricEncryptionProvider symmetricEncryptionProvider;
+    private static final int RSA_KEY_SIZE = 2048;
+    private SymmetricEncryption symmetricEncryption;
+    private AsymmetricEncryption asymmetricEncryption;
 
     @Before
     public void setUp() throws Exception {
-        symmetricEncryptionProvider = new AesSymmetricEncryptionProvider();
+        symmetricEncryption = new AesEncryption();
+        asymmetricEncryption = new RsaEncryption(RSA_KEY_SIZE);
     }
 
     @Test
@@ -28,15 +31,15 @@ public class EncryptionTest {
         final String secretMessage = "Secret message: buy more doge";
         final char[] password = "nicedoge".toCharArray();
 
-        final String encryptedString = symmetricEncryptionProvider.encrypt(secretMessage, password);
+        final String encryptedString = symmetricEncryption.encrypt(secretMessage, password);
         assertFalse("Should be encrypted", stringEquals(secretMessage, encryptedString));
 
-        final String decryptedString = symmetricEncryptionProvider.decrypt(encryptedString, password);
+        final String decryptedString = symmetricEncryption.decrypt(encryptedString, password);
         assertTrue("Should decrypt correctly", stringEquals(secretMessage, decryptedString));
 
         // Wrong password should throw exception
         try {
-            symmetricEncryptionProvider.decrypt(encryptedString, "WrongPassword".toCharArray());
+            symmetricEncryption.decrypt(encryptedString, "WrongPassword".toCharArray());
             fail("Should throw exception when decrypting with the wrong password");
         }
         catch (WrongPasswordException e) {
@@ -44,19 +47,53 @@ public class EncryptionTest {
         }
     }
 
+    @Test
+    public void testAsymmetricStringEncryption() throws Exception {
+        final String secretMessage = "secret1";
+
+        // Create keypair
+        final KeyPair keyPair = asymmetricEncryption.createNewPublicPrivateKey();
+
+        // Encrypt message
+        final String encryptedString = asymmetricEncryption.encrypt(secretMessage, keyPair.getPublic());
+        assertFalse("Should be encrypted", stringEquals(secretMessage, encryptedString));
+
+        // Decrypt message
+        final String decryptedString = asymmetricEncryption.decrypt(encryptedString, keyPair.getPrivate());
+        assertTrue("Should decrypt correctly", stringEquals(secretMessage, decryptedString));
+
+        // Wrong password should throw exception
+        try {
+            asymmetricEncryption.decrypt(encryptedString, asymmetricEncryption.createNewPublicPrivateKey().getPrivate());
+            fail("Should throw exception when decrypting with the wrong private key");
+        }
+        catch (Exception e) {
+            // Ok
+        }
+
+        // Test serializing public key and using it to encrypt something
+        final byte[] serialized = asymmetricEncryption.serializePublicKey(keyPair.getPublic());
+        final PublicKey publicKey = asymmetricEncryption.deserializePublicKey(serialized);
+        final String encryptedString2 = asymmetricEncryption.encrypt(secretMessage, publicKey);
+        assertFalse("Should be encrypted", stringEquals(secretMessage, encryptedString2));
+
+        final String decryptedString2 = asymmetricEncryption.decrypt(encryptedString, keyPair.getPrivate());
+        assertTrue("Should decrypt correctly", stringEquals(secretMessage, decryptedString2));
+    }
+
 
     @Test
     public void testLotsOfEncryption() throws Exception {
-        encryptALot(1000, 5000, 1000);
+        encryptALot(250, 5000, 1000);
     }
 
     @Test
     public void testConcurrentEncryption() throws Exception {
         TestUtils.testConcurrently("Encryption should be thread safe", 10, 1, new TestRun() {
             @Override public void run() throws Exception {
-                encryptALot(100, 5000, 1000);
-                encryptALot(100, 5000, 10);
-                encryptALot(100, 50, 10);
+                encryptALot(50, 5000, 1000);
+                encryptALot(50, 5000, 10);
+                encryptALot(50, 50, 10);
             }
         });
     }
@@ -64,28 +101,68 @@ public class EncryptionTest {
     private void encryptALot(int loops, final int messageMaxLen, final int passwordMaxLen) throws WrongPasswordException {
         Random random = new Random();
         for (int i = 0; i < loops; i++) {
-            // Generate message and password
-            String message = createRandomString(random, messageMaxLen);
-            char[] password = createRandomString(random, passwordMaxLen).toCharArray();
-
-            // Check encryption successful
-            final String encrypted = symmetricEncryptionProvider.encrypt(message, password);
-            assertFalse("The message " + message + " should be encrypted", stringEquals(message, encrypted));
-
-            // Check decryption successful
-            String decrypted = symmetricEncryptionProvider.decrypt(encrypted, password);
-            assertTrue("The message " + message + " should decrypt correctly", stringEquals(message, decrypted));
+            encryptSymmetrical(messageMaxLen, passwordMaxLen, random);
         }
+
+        // Asymmetrical is much slower, so run fewer rounds
+        for (int i = 0; i < loops / 10; i++) {
+            encryptAsymmetrical(random);
+        }
+    }
+
+    private void encryptSymmetrical(int messageMaxLen, int passwordMaxLen, Random random)
+            throws WrongPasswordException {// Generate message and password
+        String message = createRandomString(random, messageMaxLen);
+        char[] password = createRandomString(random, passwordMaxLen).toCharArray();
+
+        // Check encryption successful
+        final String encrypted = symmetricEncryption.encrypt(message, password);
+        assertFalse("The message " + message + " should be encrypted", stringEquals(message, encrypted));
+
+        // Check decryption successful
+        String decrypted = symmetricEncryption.decrypt(encrypted, password);
+        assertTrue("The message " + message + " should decrypt correctly", stringEquals(message, decrypted));
+    }
+
+    private void encryptAsymmetrical(Random random) throws WrongPasswordException {
+        // Generate public & private key
+        final KeyPair keyPair = asymmetricEncryption.createNewPublicPrivateKey();
+
+        // Generate message
+        byte[] message = createRandomBytes(random, 64);
+
+        //System.out.println("EncryptionTest.encryptAsymmetrical");
+        //System.out.println("  message = '" + message+"'");
+
+        // Check encryption successful
+        final byte[] encrypted = asymmetricEncryption.encrypt(message, keyPair.getPublic());
+        //System.out.println("  encrypted = '" + encrypted+"'");
+        assertFalse("The message " + message + " should be encrypted", byteArrayEquals(message, encrypted));
+
+        // Check decryption successful
+        byte[] decrypted = asymmetricEncryption.decrypt(encrypted, keyPair.getPrivate());
+        //System.out.println("  decrypted = '" + decrypted+"'");
+        assertTrue("The message " + message + " should decrypt correctly", byteArrayEquals(message, decrypted));
     }
 
     private String createRandomString(Random random, final int maxLen) {
         StringBuilder sb = new StringBuilder();
 
-        for (int j = 0; j < random.nextInt(maxLen); j++) {
-            sb.append(SecurityUtils.randomChar());
+        final int len = random.nextInt(maxLen);
+        for (int j = 0; j < len; j++) {
+            sb.append(SecurityUtils.randomAsciiChar());
         }
 
         return sb.toString();
+    }
+
+    private byte[] createRandomBytes(Random random, final int maxLen) {
+        final int len = random.nextInt(maxLen);
+
+        byte[] bytes = new byte[len];
+        random.nextBytes(bytes);
+
+        return bytes;
     }
 
     @Test
@@ -93,15 +170,15 @@ public class EncryptionTest {
         final byte[] secretMessage = "Secret message: buy more doge".getBytes(UTF_8);
         final char[] password = "nicedoge".toCharArray();
 
-        final byte[] encryptedData = symmetricEncryptionProvider.encrypt(secretMessage, password);
+        final byte[] encryptedData = symmetricEncryption.encrypt(secretMessage, password);
         assertFalse("Should be encrypted", byteArrayEquals(secretMessage, encryptedData));
 
-        final byte[] decryptedData = symmetricEncryptionProvider.decrypt(encryptedData, password);
+        final byte[] decryptedData = symmetricEncryption.decrypt(encryptedData, password);
         assertArrayEquals("Should decrypt correctly", secretMessage, decryptedData);
 
         // Wrong password should throw exception
         try {
-            symmetricEncryptionProvider.decrypt(encryptedData, "WrongPassword".toCharArray());
+            symmetricEncryption.decrypt(encryptedData, "WrongPassword".toCharArray());
             fail("Should throw exception when decrypting with the wrong password");
         }
         catch (WrongPasswordException e) {

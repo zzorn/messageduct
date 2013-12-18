@@ -4,7 +4,7 @@ package org.messageduct.utils.encryption;
 /**
  * Easy to use symmetric encryption of input / output streams using a password.
  */
-public interface SymmetricEncryptionProvider {
+public interface SymmetricEncryption {
 
     /**
      * Encrypt a byte array.

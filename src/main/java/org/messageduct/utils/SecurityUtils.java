@@ -34,6 +34,14 @@ public final class SecurityUtils {
                        pseudoRandom.nextInt(Character.MAX_VALUE));
     }
 
+    /**
+     * @return a new random character.
+     */
+    public static char randomAsciiChar() {
+        // Maximize entropy by mixing two random implementations
+        return (char) (32+semiSecureRandom.nextInt(128-32));
+    }
+
     // Static class
     private SecurityUtils() {
     }

@@ -1,17 +1,23 @@
 package org.messageduct.utils.encryption;
 
 import org.bouncycastle.asn1.ASN1ObjectIdentifier;
+import org.bouncycastle.jcajce.provider.asymmetric.rsa.BCRSAPublicKey;
 import org.flowutils.Check;
+import sun.security.rsa.RSAPadding;
 
 import javax.crypto.Cipher;
+import javax.crypto.spec.OAEPParameterSpec;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.math.BigInteger;
 import java.security.*;
 import java.util.Arrays;
 
 /**
- * AsymmetricEncryptionProvider implementation using RSA.
+ * AsymmetricEncryption implementation using RSA.
  */
-public final class RsaAsymmetricEncryptionProvider extends AsymmetricEncryptionProviderBase {
+public final class RsaEncryption extends AsymmetricEncryptionBase {
 
     static {
         EncryptionUtils.installBouncyCastleProviderIfNotInstalled();
@@ -21,29 +27,32 @@ public final class RsaAsymmetricEncryptionProvider extends AsymmetricEncryptionP
     public static final int DEFAULT_KEY_SIZE = 4096;
 
     private static final String PROVIDER = "BC"; // Use Bouncy Castle provider
-    private static final String CIPHER = "RSA/NONE/OAEPWithSHA1AndMGF1Padding";
+    private static final String CIPHER = "RSA/ECB/PKCS1Padding";  // TODO: Get to work with OAEP padding - it fails the tests though.
     private static final String KEYGEN_ALGORITHM = "RSA";
 
     private final int keySize;
 
     /**
-     * Creates a RsaAsymmetricEncryptionProvider with a default key size, focused on security over performance.
+     * Create a new RsaEncryption with no password verification prefix and a default key size, focused on security over performance.
      */
-    public RsaAsymmetricEncryptionProvider() {
+    public RsaEncryption() {
         this(DEFAULT_KEY_SIZE);
     }
 
     /**
+     * Create a new RsaEncryption with no password verification prefix.
      * @param keySize the keysize to use.  2048 is a recommended minimum, 4096 is recommended if performance is not an issue.
      */
-    public RsaAsymmetricEncryptionProvider(int keySize) {
-        this(keySize, DEFAULT_PASSWORD_VERIFICATION_PREFIX);
+    public RsaEncryption(int keySize) {
+        this(keySize, null);
     }
 
-    public RsaAsymmetricEncryptionProvider(int keySize, byte[] passwordVerificationPrefix) {
-        super(Arrays.<Class>asList(org.bouncycastle.asn1.eac.RSAPublicKey.class,
-                                   org.bouncycastle.asn1.pkcs.RSAPublicKey.class,
-                                   ASN1ObjectIdentifier.class,
+    /**
+     * @param keySize the keysize to use.  2048 is a recommended minimum, 4096 is recommended if performance is not an issue.
+     * @param passwordVerificationPrefix prefix string for checking whether the decryption key was correct.  Should not be too long for RSA.  Defaults to null.
+     */
+    public RsaEncryption(int keySize, byte[] passwordVerificationPrefix) {
+        super(Arrays.<Class>asList(org.bouncycastle.jcajce.provider.asymmetric.rsa.BCRSAPublicKey.class,
                                    BigInteger.class),
               passwordVerificationPrefix);
 
@@ -68,16 +77,11 @@ public final class RsaAsymmetricEncryptionProvider extends AsymmetricEncryptionP
         return keyPairGenerator.generateKeyPair();
     }
 
+
+
     @Override protected byte[] doEncrypt(PublicKey publicKey, byte[] dataToEncrypt) {
         // Get cipher
-        final Cipher cipher = getCipher();
-
-        // Initialize
-        try {
-            cipher.init(Cipher.ENCRYPT_MODE, publicKey);
-        } catch (InvalidKeyException e) {
-            throw new IllegalArgumentException("Invalid public key: " + e + ": " + e.getMessage(), e);
-        }
+        final Cipher cipher = getCipher(Cipher.ENCRYPT_MODE, publicKey);
 
         // Encrypt
         try {
@@ -89,14 +93,7 @@ public final class RsaAsymmetricEncryptionProvider extends AsymmetricEncryptionP
 
     @Override protected byte[] doDecrypt(PrivateKey privateKey, byte[] dataToDecrypt) {
         // Get cipher
-        final Cipher cipher = getCipher();
-
-        // Initialize
-        try {
-            cipher.init(Cipher.DECRYPT_MODE, privateKey);
-        } catch (InvalidKeyException e) {
-            throw new IllegalArgumentException("Invalid private key: " + e + ": " + e.getMessage(), e);
-        }
+        final Cipher cipher = getCipher(Cipher.DECRYPT_MODE, privateKey);
 
         // Encrypt
         try {
@@ -106,11 +103,22 @@ public final class RsaAsymmetricEncryptionProvider extends AsymmetricEncryptionP
         }
     }
 
-    private Cipher getCipher() {
+    private Cipher getCipher(int mode, Key key) {
+        // Get cipher
+        final Cipher cipher;
         try {
-            return Cipher.getInstance(CIPHER, PROVIDER);
+            cipher = Cipher.getInstance(CIPHER, PROVIDER);
         } catch (Exception e) {
             throw new IllegalStateException("Cipher "+CIPHER +" not available: " +e + ":"+ e.getMessage(), e);
         }
+
+        // Initialize
+        try {
+            cipher.init(mode, key);
+        } catch (InvalidKeyException e) {
+            throw new IllegalArgumentException("Invalid key: " + e + ": " + e.getMessage(), e);
+        }
+
+        return cipher;
     }
 }

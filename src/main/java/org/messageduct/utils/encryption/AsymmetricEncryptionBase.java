@@ -21,9 +21,9 @@ import static org.flowutils.Check.notNull;
 /**
  * Common functionality for asymmetric encryption.
  */
-public abstract class AsymmetricEncryptionProviderBase implements AsymmetricEncryptionProvider {
+public abstract class AsymmetricEncryptionBase implements AsymmetricEncryption {
 
-    private static final Charset CHARSET = Charset.forName("UTF8");
+    public static final Charset CHARSET = Charset.forName("UTF8");
 
     /**
      * Prefix added to plaintext data when encrypting, to detect if the password is correct.
@@ -35,17 +35,17 @@ public abstract class AsymmetricEncryptionProviderBase implements AsymmetricEncr
     private final Serializer serializer;
 
     /**
-     * Creates a AsymmetricEncryptionProviderBase with the default password verification prefix.
+     * Creates a AsymmetricEncryptionBase with the default password verification prefix.
      *
      * @param allowedPublicKeySerializationClasses the classes that are expected to be contained in the public key.
      *                                             Used to restrict public key deserialization.
      */
-    protected AsymmetricEncryptionProviderBase(Collection<Class> allowedPublicKeySerializationClasses) {
+    protected AsymmetricEncryptionBase(Collection<Class> allowedPublicKeySerializationClasses) {
         this(allowedPublicKeySerializationClasses, DEFAULT_PASSWORD_VERIFICATION_PREFIX);
     }
 
     /**
-     * Creates a AsymmetricEncryptionProviderBase with the specified password verification prefix.
+     * Creates a AsymmetricEncryptionBase with the specified password verification prefix.
      *
      * @param allowedPublicKeySerializationClasses the classes that are expected to be contained in the public key.
      *                                             Used to restrict public key deserialization.
@@ -54,12 +54,13 @@ public abstract class AsymmetricEncryptionProviderBase implements AsymmetricEncr
      *                                   If null, no prefix is added, and no password verification is done.
      *                                   Make sure you use the same prefix when encoding and decoding data.
      */
-    protected AsymmetricEncryptionProviderBase(Collection<Class> allowedPublicKeySerializationClasses, byte[] passwordVerificationPrefix) {
+    protected AsymmetricEncryptionBase(Collection<Class> allowedPublicKeySerializationClasses,
+                                       byte[] passwordVerificationPrefix) {
         this(new KryoSerializer(allowedPublicKeySerializationClasses), passwordVerificationPrefix);
     }
 
     /**
-     * Creates a AsymmetricEncryptionProviderBase with the specified password verification prefix.
+     * Creates a AsymmetricEncryptionBase with the specified password verification prefix.
      *
      * @param serializer the serializer to use for serializing the public key.
      * @param passwordVerificationPrefix a fixed sequence that is added to the plaintext before encrypting,
@@ -67,19 +68,49 @@ public abstract class AsymmetricEncryptionProviderBase implements AsymmetricEncr
      *                                   If null, no prefix is added, and no password verification is done.
      *                                   Make sure you use the same prefix when encoding and decoding data.
      */
-    protected AsymmetricEncryptionProviderBase(Serializer serializer, byte[] passwordVerificationPrefix) {
+    protected AsymmetricEncryptionBase(Serializer serializer, byte[] passwordVerificationPrefix) {
         Check.notNull(serializer, "serializer");
 
         this.serializer = serializer;
         this.passwordVerificationPrefix = passwordVerificationPrefix;
     }
 
-    @Override public void serializePublicKey(PublicKey publicKey, OutputStream outputStream) throws IOException {
-        outputStream.write(serializer.serialize(publicKey));
+
+    @Override public byte[] serializePublicKey(PublicKey publicKey) {
+        return serializer.serialize(publicKey);
     }
 
-    @Override public PublicKey deserializePublicKey(InputStream inputStream) throws IOException {
-        return serializer.deserialize(inputStream);
+    @Override public PublicKey deserializePublicKey(byte[] serializedPublicKey) {
+        return serializer.deserialize(serializedPublicKey);
+    }
+
+    @Override public final void serializePublicKey(PublicKey publicKey, OutputStream outputStream) throws IOException {
+        final byte[] publicKeyData = serializePublicKey(publicKey);
+
+        final int dataLength = publicKeyData.length;
+        if (dataLength > 0xFFFF) throw new IllegalArgumentException("The provided public key is too long, max serialized length is " + 0xFFFF);
+
+        // Write length (assumes key is max 64 kb), store in network byte order = big endian = most significant byte first.
+        outputStream.write((dataLength >> 8) & 0xFF);
+        outputStream.write(dataLength & 0xFF);
+
+        // Write data
+        outputStream.write(publicKeyData);
+    }
+
+    @Override public final PublicKey deserializePublicKey(InputStream inputStream) throws IOException {
+        // Read length, stored in big endian format (=most significant byte first).
+        int high = readByte(inputStream);
+        int low = readByte(inputStream);
+        int length = (high << 8) + low;
+
+        // Read the encoded key
+        byte[] encodedKey = new byte[length];
+        final int readBytes = inputStream.read(encodedKey);
+        if (readBytes != length) throw new IOException("Could not read public key, unexpected end of file.");
+
+        // Decode key
+        return deserializePublicKey(encodedKey);
     }
 
     @Override public final byte[] encrypt(byte[] dataToEncrypt, PublicKey publicKey) {
@@ -106,7 +137,7 @@ public abstract class AsymmetricEncryptionProviderBase implements AsymmetricEncr
         return new String(decrypt(dataToDecrypt, privateKey), CHARSET).toCharArray();
     }
 
-    @Override public final String encryptString(String plaintextString, PublicKey publicKey) {
+    @Override public final String encrypt(String plaintextString, PublicKey publicKey) {
         notNull(plaintextString, "plaintextString");
         Check.notNull(publicKey, "publicKey");
 
@@ -120,7 +151,7 @@ public abstract class AsymmetricEncryptionProviderBase implements AsymmetricEncr
         return Base64.encodeBase64String(encryptedData);
     }
 
-    @Override public final String decryptString(String encryptedString, PrivateKey privateKey) throws WrongPasswordException {
+    @Override public final String decrypt(String encryptedString, PrivateKey privateKey) throws WrongPasswordException {
         notNull(encryptedString, "encryptedString");
         Check.notNull(privateKey, "privateKey");
         if (!Base64.isBase64(encryptedString)) throw new IllegalArgumentException("The provided encrypted string: \n"+encryptedString+"\n is not base64 encoded, can not decode.  Data corrupt?");
@@ -139,5 +170,13 @@ public abstract class AsymmetricEncryptionProviderBase implements AsymmetricEncr
     protected abstract byte[] doEncrypt(PublicKey publicKey, byte[] dataToEncrypt);
 
     protected abstract byte[] doDecrypt(PrivateKey privateKey, byte[] dataToDecrypt);
+
+
+    private int readByte(InputStream inputStream) throws IOException {
+        int b = inputStream.read();
+        if (b < 0) throw new IOException("Could not read public key, unexpected end of file.");
+        return b;
+    }
+
 
 }

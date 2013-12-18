@@ -31,7 +31,7 @@ public class EncryptionUtils {
     }
 
     public static byte[] addPasswordVerificationPrefix(byte[] plaintextData, final byte[] verificationPrefix) {
-        if (verificationPrefix != null) {
+        if (verificationPrefix != null && verificationPrefix.length > 0) {
             plaintextData = ByteArrayUtils.concatenateByteArrays(verificationPrefix, plaintextData);
         }
         return plaintextData;
@@ -41,7 +41,7 @@ public class EncryptionUtils {
                                                     final byte[] verificationPrefix,
                                                     final String decryptionType) throws WrongPasswordException {
         // Check password verification prefix if specified
-        if (verificationPrefix != null) {
+        if (verificationPrefix != null && verificationPrefix.length > 0) {
             // Check length
             if (decryptedData.length < verificationPrefix.length) {
                 throw new WrongPasswordException("Wrong " +

@@ -21,24 +21,39 @@ import static org.flowutils.Check.notNull;
  * Or at least start with a protocol version specific handshake.
  *
  */
-public class EncryptionFilter extends IoFilterAdapter {
+public class EncryptionFilter extends IoFilterAdapter /* WriteRequestFilter*/ {
 
     private final AsymmetricEncryption asymmetricEncryption;
     private final SymmetricEncryption symmetricEncryption;
+    private final boolean clientSide;
 
-
-    public EncryptionFilter() {
-        this(new RsaEncryption(), new AesEncryption());
+    public EncryptionFilter(final boolean clientSide) {
+        this(new RsaEncryption(), new AesEncryption(), clientSide);
     }
 
     public EncryptionFilter(AsymmetricEncryption asymmetricEncryption,
-                            SymmetricEncryption symmetricEncryption) {
+                            SymmetricEncryption symmetricEncryption,
+                            boolean clientSide) {
         notNull(asymmetricEncryption, "asymmetricEncryption");
         notNull(symmetricEncryption, "symmetricEncryption");
 
+        this.clientSide = clientSide;
         this.asymmetricEncryption = asymmetricEncryption;
         this.symmetricEncryption = symmetricEncryption;
     }
 
+    /*
+    @Override
+    protected Object doFilterWrite(NextFilter nextFilter, IoSession session, WriteRequest writeRequest) throws Exception {
+
+    }
+    */
+
+
     // TODO: Implement
+
+
+    public boolean isClientSide() {
+        return clientSide;
+    }
 }

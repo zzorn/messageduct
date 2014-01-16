@@ -9,6 +9,7 @@ import org.messageduct.utils.encryption.AsymmetricEncryption;
 import org.messageduct.utils.encryption.RsaEncryption;
 import org.messageduct.utils.encryption.SymmetricEncryption;
 
+import javax.crypto.SecretKey;
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.security.KeyPair;
@@ -35,6 +36,10 @@ import static org.messageduct.server.mina.EncryptionFilter.State.*;
     // activate Encryption for that session.
     // Use stream type encryption, subsequent messages can be split or merged,
     // so can not assume that beginning and end are well defined.
+
+// TODO: Write own networking library with simpler filter support and NIO bytebuffers
+
+@Deprecated
 public class EncryptionFilter extends WriteRequestFilter {
 
     private static final Charset UTF8             = Charset.forName("UTF8");
@@ -125,11 +130,11 @@ public class EncryptionFilter extends WriteRequestFilter {
                 setClientPublicKey(session, clientPublicKey);
 
                 // Generate secret key for session
-                final byte[] secretSessionKey = symmetricEncryption.generateNewRandomKey();
+                final SecretKey secretSessionKey = symmetricEncryption.generateSecretKeyRandomly();
                 setSecretKey(session, secretSessionKey);
 
                 // Send secret session key to client, encrypted with client public key
-                session.write(asymmetricEncryption.encrypt(secretSessionKey, clientPublicKey));
+                session.write(asymmetricEncryption.encrypt(symmetricEncryption.serializeSecretKey(secretSessionKey), clientPublicKey));
 
                 // Session is ok as soon as client has received it.
                 setState(session, CONNECTED);
@@ -146,7 +151,7 @@ public class EncryptionFilter extends WriteRequestFilter {
         else if (clientSide && state == CLIENT_WAITING_FOR_SESSION_KEY) {
             // We are waiting for encrypted secret key
             try {
-                final byte[] secretKey = asymmetricEncryption.decrypt(messageData, getKeys(session).getPrivate());
+                final SecretKey secretKey = symmetricEncryption.deserializeSecretKey(asymmetricEncryption.decrypt(messageData, getKeys(session).getPrivate()));
                 setSecretKey(session, secretKey);
                 setState(session, CONNECTED);
             } catch (Throwable e) {
@@ -237,11 +242,11 @@ public class EncryptionFilter extends WriteRequestFilter {
         session.setAttribute(CLIENT_PUB_KEY, key);
     }
 
-    private byte[] getSecretKey(IoSession session) {
-        return (byte[]) session.getAttribute(SECRET_KEY);
+    private SecretKey getSecretKey(IoSession session) {
+        return (SecretKey) session.getAttribute(SECRET_KEY);
     }
 
-    private void setSecretKey(IoSession session, byte[] key) {
+    private void setSecretKey(IoSession session, SecretKey key) {
         session.setAttribute(SECRET_KEY, key);
     }
 

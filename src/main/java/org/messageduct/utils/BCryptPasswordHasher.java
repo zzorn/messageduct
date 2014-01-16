@@ -4,10 +4,12 @@ import org.flowutils.Check;
 
 /**
  * Password hasher that uses BCrypt (blowfish style hasher).
+ *
+ * Not thread safe.
  */
 public final class BCryptPasswordHasher implements PasswordHasher {
 
-    private static final int DEFAULT_LOG_OF_SALT_ROUNDS = 12;
+    private static final int DEFAULT_LOG_OF_SALT_ROUNDS = 11;
     private static final int MINIMUM_LOG_OF_SALT_ROUNDS = 8;
 
     private final int logOfSaltRounds;

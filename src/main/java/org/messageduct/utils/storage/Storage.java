@@ -3,7 +3,7 @@ package org.messageduct.utils.storage;
 import java.io.IOException;
 
 /**
- * Interface for something that stores java objects persistently.
+ * Interface for something that stores a java object persistently.
  */
 public interface Storage {
 

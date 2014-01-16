@@ -1,26 +1,16 @@
 package org.messageduct.utils.encryption;
 
 
+import javax.crypto.SecretKey;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+
 /**
  * Easy to use symmetric encryption of input / output streams using a password.
  */
+// TODO: Add bytebuffer support
 public interface SymmetricEncryption {
-
-    /**
-     * @return key length used by this encryption, specified in bits (not bytes).
-     */
-    int getKeyLengthBits();
-
-    /**
-     * @return block length used by this encryption, specified in bits (not bytes).
-     *         The initialization vector must be this length.
-     */
-    int getBlockLengthBits();
-
-    /**
-     * @return a new random key of suitable length for this symmetric encryption.
-     */
-    byte[] generateNewRandomKey();
 
     /**
      * Encrypt a byte array.
@@ -29,10 +19,10 @@ public interface SymmetricEncryption {
      * as it re-creates the needed encryption key on each call.
      *
      * @param plaintextData non-encrypted data to encrypt.
-     * @param key key to use when encrypting.  Must be the correct length for the cipher.
+     * @param key key to use when encrypting.  Must be the correct type for the cipher.
      * @return new byte array with the encrypted data.
      */
-    byte[] encrypt(byte[] plaintextData, byte[] key);
+    byte[] encrypt(byte[] plaintextData, SecretKey key);
 
     /**
      * Decrypt a byte array.
@@ -41,11 +31,11 @@ public interface SymmetricEncryption {
      * as it re-creates the needed decryption key on each call.
      *
      * @param encryptedData encrypted text to decrypt, stored in base64 format.
-     * @param key key to use when decrypting.  Must be of the correct length for this chipher.
+     * @param key key to use when decrypting.  Must be of the correct type for this chipher.
      * @return the decrypted text.
      * @throws WrongPasswordException if the password was incorrect, and password detection is enabled.
      */
-    byte[] decrypt(byte[] encryptedData, byte[] key) throws WrongPasswordException;
+    byte[] decrypt(byte[] encryptedData, SecretKey key) throws WrongPasswordException;
 
     /**
      * Encrypt a byte array.
@@ -97,33 +87,78 @@ public interface SymmetricEncryption {
      */
     String decrypt(String encryptedData, char[] password) throws WrongPasswordException;
 
+    /**
+     * Encrypt a string.
+     *
+     * Note that this might be somewhat inefficient for frequent use on small strings,
+     * as it re-creates the needed encryption key on each call.
+     *
+     * @param plaintextData non-encrypted string to encrypt.
+     * @param key key to use when encrypting.  Must be of the correct type for this chipher.
+     * @return string with the encrypted data in base64 format.
+     */
+    String encrypt(String plaintextData, SecretKey key);
 
-    /* Not currently provided.
-    /* *
-     * Create an encrypting stream.
+    /**
+     * Decrypt a string.
      *
-     * If password checking is enabled, a password checking prefix is written to the stream.
+     * Note that this might be somewhat inefficient for frequent use on small strings,
+     * as it re-creates the needed decryption key on each call.
      *
-     * @param target output stream to write encrypted data to encrypt.
-     * @param password password to use to encrypt the stream.
-     * @return output stream that plaintext data can be written to.
-     *         It is the callers responsibility to close the stream once done.
-     * /
-    OutputStream createEncryptionStream(OutputStream target, char[] password) throws IOException;
-
-    /* *
-     * Create a decrypting stream.
-     *
-     * If password checking is enabled, the password checking prefix is read from the stream, and an exception
-     * thrown if the password was wrong.
-     *
-     * @param source encrypted input stream to decrypt.
-     * @param password password to use to decrypt the stream.
-     * @return decrypted input stream with the plaintext.
-     *         It is the callers responsibility to close the stream once done.
+     * @param encryptedData encrypted text to decrypt, stored in base64 format.
+     * @param key key to use when decrypting.  Must be of the correct type for this chipher.
+     * @return the decrypted text.
      * @throws WrongPasswordException if the password was incorrect, and password detection is enabled.
-     * /
-    InputStream createDecryptionStream(InputStream source, char[] password) throws IOException, WrongPasswordException;
-    */
+     */
+    String decrypt(String encryptedData, SecretKey key) throws WrongPasswordException;
+
+    /**
+     * @return a new random key of suitable type for this symmetric encryption.
+     */
+    SecretKey generateSecretKeyRandomly();
+
+    /**
+     * @param password password to use for generating the key.
+     * @return a key for the cipher used, based on the specified password.
+     */
+    SecretKey generateSecretKeyFromPassword(char[] password);
+
+    /**
+     * Serialized the secret key, e.g. for sending over an asymmetrically encrypted channel.
+     * @param key secret key to serialize.
+     * @return the secret key in serialized form
+     */
+    byte[] serializeSecretKey(SecretKey key);
+
+    /**
+     * Deserializes a secret key.
+     * @param serializedKey serialized data
+     * @return the deserialized secret key.
+     */
+    SecretKey deserializeSecretKey(byte[] serializedKey);
+
+    /**
+     * Serialized a secret key to an output stream.
+     * The size of the serialized key is written as well.
+     * @param key secret key to serialize.
+     * @param outputStream stream to write the key to.
+     * @throws IOException thrown if there was some problem when writing to the stream
+     */
+    void serializeSecretKey(SecretKey key, OutputStream outputStream) throws IOException;
+
+    /**
+     * Deserialize a secret key from an input stream.
+     * The key is preceded by its size.
+     * @param inputStream stream to read from.
+     * @return the deserialized secret key.
+     * @throws IOException thrown if there was some problem when reading from the stream, or if the key was in an invalid format.
+     */
+    SecretKey deserializeSecretKey(InputStream inputStream) throws IOException;
+
+    /**
+     * @return key length used by this encryption, specified in bits (not bytes).
+     */
+    int getKeyLengthBits();
+
 
 }

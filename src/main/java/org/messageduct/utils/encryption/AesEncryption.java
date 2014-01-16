@@ -11,10 +11,15 @@ import org.bouncycastle.crypto.params.KeyParameter;
 import org.bouncycastle.crypto.params.ParametersWithIV;
 import org.messageduct.utils.ByteArrayUtils;
 
+import javax.crypto.Cipher;
 import javax.crypto.SecretKey;
 import javax.crypto.SecretKeyFactory;
+import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.PBEKeySpec;
 import javax.crypto.spec.SecretKeySpec;
+import java.math.BigInteger;
+import java.security.InvalidAlgorithmParameterException;
+import java.security.InvalidKeyException;
 import java.security.SecureRandom;
 import java.security.spec.KeySpec;
 import java.util.Arrays;
@@ -23,6 +28,8 @@ import static org.flowutils.Check.notNull;
 
 /**
  * Implementation of EncryptionProvider that uses the Java cryptography API.
+ *
+ * Uses the bouncy castle implementation, so that we get 256 bit encryption without requiring users to modify their java installation.
  */
 public final class AesEncryption extends SymmetricEncryptionBase {
 
@@ -84,7 +91,8 @@ public final class AesEncryption extends SymmetricEncryptionBase {
      * @param secureRandom random number generator used for generating initialization vectors.
      */
     public AesEncryption(final byte[] salt, final byte[] passwordVerificationPrefix, SecureRandom secureRandom) {
-        super(passwordVerificationPrefix);
+        super(Arrays.<Class>asList(javax.crypto.spec.SecretKeySpec.class, byte[].class),
+              passwordVerificationPrefix);
         notNull(salt, "salt");
         notNull(secureRandom, "secureRandom");
 
@@ -92,7 +100,7 @@ public final class AesEncryption extends SymmetricEncryptionBase {
         this.secureRandom = secureRandom;
     }
 
-    @Override protected byte[] doEncrypt(byte[] plaintextData, byte[] key) {
+    @Override protected byte[] doEncrypt(byte[] plaintextData, SecretKey key) {
         // Create random initialization vector
         byte[] initializationVector = new byte[BLOCK_LENGTH_BITS/8];
         secureRandom.nextBytes(initializationVector);
@@ -104,15 +112,15 @@ public final class AesEncryption extends SymmetricEncryptionBase {
         byte[] encryptedData = process(plaintextData, cipher, "encrypting");
 
         // Prefix the initialization vectors
-        encryptedData = ByteArrayUtils.concatenateByteArrays(initializationVector, encryptedData);
+        encryptedData = ByteArrayUtils.concatenate(initializationVector, encryptedData);
 
         return encryptedData;
     }
 
-    @Override protected byte[] doDecrypt(byte[] encryptedData, byte[] key) {
+    @Override protected byte[] doDecrypt(byte[] encryptedData, SecretKey key) {
         // Get prepended initialization vector
-        byte[] initializationVector = Arrays.copyOf(encryptedData, BLOCK_LENGTH_BYTES);
-        encryptedData = ByteArrayUtils.removeArrayPrefix(encryptedData, BLOCK_LENGTH_BYTES);
+        byte[] initializationVector = ByteArrayUtils.getFirst(encryptedData, BLOCK_LENGTH_BYTES);
+        encryptedData = ByteArrayUtils.dropFirst(encryptedData, BLOCK_LENGTH_BYTES);
 
         // Create cipher to decrypt with
         final BufferedBlockCipher cipher = createCipher(false, key, initializationVector);
@@ -138,16 +146,27 @@ public final class AesEncryption extends SymmetricEncryptionBase {
     }
 
 
-    private BufferedBlockCipher createCipher(boolean encrypt, byte[] key, byte[] initializationVector) {
+    private BufferedBlockCipher createCipher(boolean encrypt, SecretKey key, byte[] initializationVector) {
         try {
-            // Setup cipher parameters with key and initialization vector
-            CipherParameters params = new ParametersWithIV(new KeyParameter(key), initializationVector);
+            // Setup AES cipher with CBC mode and TCB padding
 
-            // Setup cipher with padding
-            //BlockCipherPadding padding = new PKCS7Padding(); // This keeps failing with "pad block corrupted", using TBCPadding for now TODO Figure out why
+            // AES is a state of the art block based cipher which is fast and quite secure when 256 bit keys are used.
+            // It is used to encrypt the data in blocks of 128 bits.
+
+            // CBC mode xors the plaintext of each block with the encrypted version of the previous block before encryption
+            // (and the first block with the initialization vector), this ensures that each block looks different even
+            // if it contains the same data (without a mode like this, the encryption would be very weak).
+
+            // The padding adds some non-constant bits after the end of the data to the last block, to avoid attacks
+            // based on knowing the plaintext value at some location.
+
+            // PKCS7Padding might be preferable, but it kept throwing "pad block corrupted" exceptions, so using TBC padding.
+
             BufferedBlockCipher cipher = new PaddedBufferedBlockCipher(new CBCBlockCipher(new AESEngine()), new TBCPadding());
             cipher.reset();
 
+            // Setup cipher parameters with key and initialization vector
+            CipherParameters params = new ParametersWithIV(new KeyParameter(key.getEncoded()), initializationVector);
             cipher.init(encrypt, params);
 
             return cipher;
@@ -157,17 +176,18 @@ public final class AesEncryption extends SymmetricEncryptionBase {
         }
     }
 
+
     /**
      * @param password password to use for generating the key.
      * @return a key of the correct length for the cipher used, based on the specified password.
      */
-    protected byte[] generateKey(char[] password) {
+    public SecretKey generateSecretKeyFromPassword(char[] password) {
         try {
             // Generate raw AES key from password and salt
             SecretKeyFactory factory = SecretKeyFactory.getInstance(KEY_HASH_ALGORITHM, PROVIDER);
+
             KeySpec spec = new PBEKeySpec(password, salt, KEY_HASH_ROUNDS, KEY_LENGTH_BITS);
-            SecretKey secret = new SecretKeySpec(factory.generateSecret(spec).getEncoded(), KEY_ALGORITHM);
-            return secret.getEncoded();
+            return new SecretKeySpec(factory.generateSecret(spec).getEncoded(), KEY_ALGORITHM);
         }
         catch (Exception e) {
             throw new IllegalStateException("Problem when generating key from password: " + e.getMessage(), e);
@@ -180,8 +200,4 @@ public final class AesEncryption extends SymmetricEncryptionBase {
         return KEY_LENGTH_BITS;
     }
 
-    @Override
-    public int getBlockLengthBits() {
-        return BLOCK_LENGTH_BITS;
-    }
 }

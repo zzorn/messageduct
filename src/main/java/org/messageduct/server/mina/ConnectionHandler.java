@@ -7,10 +7,14 @@ import org.apache.mina.core.session.IoSession;
 import org.messageduct.account.messages.CreateAccountSuccessMessage;
 import org.messageduct.account.messages.DeleteAccountSuccessMessage;
 import org.messageduct.account.messages.LoginSuccessMessage;
+import org.messageduct.common.NetworkConfig;
 import org.messageduct.server.MessageListener;
 
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
+
+import static org.flowutils.Check.*;
+import static org.flowutils.Check.notNull;
 
 /**
  * Listens to messages from connected users and forwards them to application provided message listeners.
@@ -48,6 +52,10 @@ public final class ConnectionHandler extends IoHandlerAdapter implements IoHandl
      */
     public void removeListener(MessageListener listener) {
         messageListeners.remove(listener);
+    }
+
+    @Override public void sessionOpened(IoSession session) throws Exception {
+
     }
 
     @Override
@@ -92,50 +100,46 @@ public final class ConnectionHandler extends IoHandlerAdapter implements IoHandl
 
     @Override
     public void messageReceived(IoSession session, Object message) throws Exception {
-        System.out.println("ConnectionHandler.messageReceived");
-        System.out.println("   message = " + message);
-
         // Get UserSession of user if logged in
         final MinaUserSession userSession = AuthenticationFilter.getUserSession(session);
         if (userSession == null) {
-            // We should be logged in and have a username if we are here.  If not, panic:
+            // We should be logged in and have a username if we are here.  If not, close session and log error:
             session.close(false);
             final String errorMsg = "No username found in session " + session;
             System.out.println("ConnectionHandler.messageReceived error");
             System.out.println("  errorMsg = " + errorMsg);
-            //return;
-            throw new IllegalStateException(errorMsg);
-        }
-
-        // Handle the message
-        if (message == null) {
-            // Null messages are not acceptable
-            session.close(true);
-            // TODO: Log error
-            System.out.println("message was null in session " + session);
-        }
-        else if (message instanceof LoginSuccessMessage) {
-            // User logged in
-            for (MessageListener messageListener : messageListeners) {
-                messageListener.userConnected(userSession);
-            }
-        }
-        else if (message instanceof CreateAccountSuccessMessage) {
-            // A new account was created
-            for (MessageListener messageListener : messageListeners) {
-                messageListener.userCreated(userSession);
-            }
-        }
-        else if (message instanceof DeleteAccountSuccessMessage) {
-            // An account was deleted
-            for (MessageListener messageListener : messageListeners) {
-                messageListener.userDeleted(userSession);
-            }
         }
         else {
-            // Normal message
-            for (MessageListener messageListener : messageListeners) {
-                messageListener.messageReceived(userSession, message);
+            // Handle the message
+            if (message == null) {
+                // Null messages are not acceptable
+                session.close(true);
+                // TODO: Log error
+                System.out.println("message was null in session " + session);
+            }
+            else if (message instanceof LoginSuccessMessage) {
+                // User logged in
+                for (MessageListener messageListener : messageListeners) {
+                    messageListener.userConnected(userSession);
+                }
+            }
+            else if (message instanceof CreateAccountSuccessMessage) {
+                // A new account was created
+                for (MessageListener messageListener : messageListeners) {
+                    messageListener.userCreated(userSession);
+                }
+            }
+            else if (message instanceof DeleteAccountSuccessMessage) {
+                // An account was deleted
+                for (MessageListener messageListener : messageListeners) {
+                    messageListener.userDeleted(userSession);
+                }
+            }
+            else {
+                // Normal message
+                for (MessageListener messageListener : messageListeners) {
+                    messageListener.messageReceived(userSession, message);
+                }
             }
         }
     }

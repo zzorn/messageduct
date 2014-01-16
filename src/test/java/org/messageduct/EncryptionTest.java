@@ -5,6 +5,7 @@ import org.junit.Test;
 import org.messageduct.utils.SecurityUtils;
 import org.messageduct.utils.encryption.*;
 
+import javax.crypto.SecretKey;
 import java.nio.charset.Charset;
 import java.security.KeyPair;
 import java.security.PublicKey;
@@ -44,6 +45,16 @@ public class EncryptionTest {
         catch (WrongPasswordException e) {
             // Ok
         }
+
+        // Test serializing secret key and using it to encrypt something
+        final byte[] serialized = symmetricEncryption.serializeSecretKey(symmetricEncryption.generateSecretKeyFromPassword(password));
+        final SecretKey secretKey = symmetricEncryption.deserializeSecretKey(serialized);
+        final String encryptedString2 = symmetricEncryption.encrypt(secretMessage, secretKey);
+        assertFalse("Should be encrypted", stringEquals(secretMessage, encryptedString2));
+
+        final String decryptedString2 = symmetricEncryption.decrypt(encryptedString2, secretKey);
+        assertTrue("Should decrypt correctly", stringEquals(secretMessage, decryptedString2));
+
     }
 
     @Test
@@ -76,23 +87,23 @@ public class EncryptionTest {
         final String encryptedString2 = asymmetricEncryption.encrypt(secretMessage, publicKey);
         assertFalse("Should be encrypted", stringEquals(secretMessage, encryptedString2));
 
-        final String decryptedString2 = asymmetricEncryption.decrypt(encryptedString, keyPair.getPrivate());
+        final String decryptedString2 = asymmetricEncryption.decrypt(encryptedString2, keyPair.getPrivate());
         assertTrue("Should decrypt correctly", stringEquals(secretMessage, decryptedString2));
     }
 
 
     @Test
     public void testLotsOfEncryption() throws Exception {
-        encryptALot(50, 5000, 1000);
+        encryptALot(20, 2000, 1000);
     }
 
     @Test
     public void testConcurrentEncryption() throws Exception {
         TestUtils.testConcurrently("Encryption should be thread safe", 10, 1, new TestRun() {
             @Override public void run() throws Exception {
-                encryptALot(20, 2000, 500);
-                encryptALot(20, 2000, 10);
-                encryptALot(20, 50, 10);
+                encryptALot(5, 1000, 500);
+                encryptALot(5, 1000, 10);
+                encryptALot(5, 50, 10);
             }
         });
     }

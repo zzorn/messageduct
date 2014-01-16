@@ -45,6 +45,8 @@
         and has a good filterchain concept that makes it easy to add encryption,
         some ddos protection, authentication, packing, swappable protocols,
         and a threadpool based execution system.
+        (correction: No, encryption and authentication was not easy to add after all.
+        Compression and threading was provided out of the box and seem to work.)
         -->
         <dependency>
             <groupId>org.apache.mina</groupId>

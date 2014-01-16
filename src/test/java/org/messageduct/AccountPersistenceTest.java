@@ -13,6 +13,8 @@ import java.io.File;
 
 public class AccountPersistenceTest {
 
+    private static final File STORAGE_FILE = new File("AccountPersistenceTestDatabase.db");
+
     @Test
     public void testBasicOperations() throws Exception {
         checkBasicOperations(new MemoryAccountPersistence());
@@ -20,12 +22,15 @@ public class AccountPersistenceTest {
     }
 
     private StorageAccountPersistence createFileBackedAccountPersistence() {
-        return new StorageAccountPersistence(new File("AccountPersistenceTestDatabase.db"), "foobar".toCharArray());
+        return new StorageAccountPersistence(STORAGE_FILE, "foobar".toCharArray());
     }
 
     @Test
     public void testPersistence() throws Exception {
         final String username = "foobar";
+
+        // Delete any old test file
+        STORAGE_FILE.delete();
 
         // Create persistence
         final AccountPersistence accountPersistence = createFileBackedAccountPersistence();
@@ -52,6 +57,8 @@ public class AccountPersistenceTest {
         assertTrue(accountPersistence2.deleteAccount(username));
         accountPersistence2.shutdown();
 
+        // Delete test file
+        STORAGE_FILE.delete();
     }
 
     private void checkBasicOperations(AccountPersistence accountPersistence) {

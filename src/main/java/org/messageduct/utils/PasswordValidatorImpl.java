@@ -16,10 +16,10 @@ public final class PasswordValidatorImpl implements PasswordValidator {
 
     public static final int DEFAULT_MIN_PASSWORD_LENGTH = 12;
     public static final int DEFAULT_MAX_PASSWORD_LENGTH = 256;
-    public static final int DEFAULT_MIN_NUMBER_OF_DIFFERENT_CHARACTERS = 256;
+    public static final int DEFAULT_MIN_NUMBER_OF_DIFFERENT_CHARACTER_TYPES = 1;
 
     /**
-     * The thousand most common passwords or so (they seem to be mostly or all 8 or less characters long).
+     * The thousand most common passwords or so (they seem to be 8 or less characters long).
      */
     private static final List<String> DEFAULT_DICTIONARY = Arrays.asList(
             "password", "123456", "12345678", "1234", "qwerty", "12345", "dragon", "pussy", "baseball", "football",
@@ -196,8 +196,7 @@ public final class PasswordValidatorImpl implements PasswordValidator {
 
         // Check length
         if (password.length < minLength) return "The password is too short, minimum length is " + minLength + ".";
-        if (password.length > maxLength)
-            return "The password is too long, maximum length is " + maxLength + " (sorry about that).";
+        if (password.length > maxLength) return "The password is too long, maximum length is " + maxLength + " (sorry about that).";
 
         // Check against username
         if (equalsIgnoreCase(userName, password)) return "Password and username can not be the same.";

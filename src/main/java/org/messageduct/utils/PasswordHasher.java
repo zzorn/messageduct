@@ -2,6 +2,8 @@ package org.messageduct.utils;
 
 /**
  * Hashes passwords, and compares passwords to a hash.
+ *
+ * Not necessarily thread safe.
  */
 public interface PasswordHasher {
 

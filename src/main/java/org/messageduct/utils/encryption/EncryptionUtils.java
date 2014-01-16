@@ -6,7 +6,7 @@ import org.messageduct.utils.ByteArrayUtils;
 import java.security.Security;
 
 /**
- *
+ * Utilities for the encryption functions.
  */
 public class EncryptionUtils {
 
@@ -27,12 +27,9 @@ public class EncryptionUtils {
     }
 
 
-    private EncryptionUtils() {
-    }
-
     public static byte[] addPasswordVerificationPrefix(byte[] plaintextData, final byte[] verificationPrefix) {
         if (verificationPrefix != null && verificationPrefix.length > 0) {
-            plaintextData = ByteArrayUtils.concatenateByteArrays(verificationPrefix, plaintextData);
+            plaintextData = ByteArrayUtils.concatenate(verificationPrefix, plaintextData);
         }
         return plaintextData;
     }
@@ -59,8 +56,13 @@ public class EncryptionUtils {
             }
 
             // Remove the prefix from the data
-            decryptedData = ByteArrayUtils.removeArrayPrefix(decryptedData, verificationPrefix.length);
+            decryptedData = ByteArrayUtils.dropFirst(decryptedData, verificationPrefix.length);
         }
         return decryptedData;
     }
+
+
+    private EncryptionUtils() {
+    }
+
 }

@@ -49,8 +49,8 @@ public class NetworkingTest {
         networkConfig.registerAllowedClasses(Color.class,
                                              SayMessage.class,
                                              HearMessage.class);
-        networkConfig.setCompressionEnabled(false);
-        networkConfig.setEncryptionEnabled(true);
+        networkConfig.setCompressionEnabled(true);
+        networkConfig.setEncryptionEnabled(false);
         networkConfig.setMessageLoggingEnabled(true);
 
         final DefaultAccountService accountService = new DefaultAccountService(new MemoryAccountPersistence());

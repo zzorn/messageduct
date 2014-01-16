@@ -16,7 +16,7 @@ import static org.junit.Assert.*;
 public class EncryptionTest {
 
     private static final Charset UTF_8 = Charset.forName("UTF8");
-    private static final int RSA_KEY_SIZE = 2048;
+    private static final int RSA_KEY_SIZE = 1024;
     private SymmetricEncryption symmetricEncryption;
     private AsymmetricEncryption asymmetricEncryption;
 
@@ -27,7 +27,7 @@ public class EncryptionTest {
     }
 
     @Test
-    public void testStringEncryption() throws Exception {
+    public void testSymmetricalEncryption() throws Exception {
         final String secretMessage = "Secret message: buy more doge";
         final char[] password = "nicedoge".toCharArray();
 
@@ -114,8 +114,7 @@ public class EncryptionTest {
             encryptSymmetrical(messageMaxLen, passwordMaxLen, random);
         }
 
-        // Asymmetrical is much slower, so run fewer rounds
-        for (int i = 0; i < loops / 10; i++) {
+        for (int i = 0; i < loops; i++) {
             encryptAsymmetrical(random);
         }
     }

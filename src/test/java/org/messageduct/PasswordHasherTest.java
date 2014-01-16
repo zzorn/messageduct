@@ -11,8 +11,8 @@ public class PasswordHasherTest {
     @Test
     public void testPasswordHasher() throws Exception {
         checkHasher(new BCryptPasswordHasher());
+        checkHasher(new BCryptPasswordHasher(10));
         checkHasher(new BCryptPasswordHasher(8));
-        checkHasher(new BCryptPasswordHasher(6));
     }
 
     private void checkHasher(final PasswordHasher passwordHasher) {

@@ -47,6 +47,19 @@ public class MinaServerSession extends ServerSessionBase {
                 onIdle();
             }
 
+            @Override
+            public void sessionCreated(final IoSession session)
+                    throws Exception {
+                System.out.println("MinaServerSession.sessionCreated");
+            }
+
+            @Override
+            public void sessionOpened(final IoSession session)
+                    throws Exception {
+                System.out.println("MinaServerSession.sessionOpened");
+                onConnected();
+            }
+
             @Override public void sessionClosed(IoSession session) throws Exception {
                 onDisconnected();
             }
@@ -62,14 +75,14 @@ public class MinaServerSession extends ServerSessionBase {
         connectFuture.addListener(new IoFutureListener<ConnectFuture>() {
             @Override public void operationComplete(ConnectFuture future) {
                 try {
-                    System.out.println("MinaServerSession.operationComplete");
+                    System.out.println("connected: MinaServerSession.operationComplete");
 
                     // Store session
                     session = future.getSession();
                     if (session == null) throw new IllegalStateException("Session not created even though connect future fired");
 
                     // Notify about connection
-                    onConnected();
+                    //onConnected();
                 }
                 catch (Throwable e) {
                     System.out.println("MinaServerSession.operationComplete error " + e);

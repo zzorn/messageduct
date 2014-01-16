@@ -3,7 +3,9 @@ package org.messageduct.utils.encryption;
 import org.apache.commons.codec.binary.Base64;
 
 import java.nio.charset.Charset;
+import java.security.SecureRandom;
 
+import static org.flowutils.Check.equal;
 import static org.flowutils.Check.notNull;
 
 /**
@@ -17,7 +19,7 @@ public abstract class SymmetricEncryptionBase implements SymmetricEncryption {
     /**
      * Prefix added to plaintext data when encrypting, to detect if the password is correct.
      */
-    public static final byte[] DEFAULT_PASSWORD_VERIFICATION_PREFIX = "EncryptedByCEP".getBytes(CHARSET);
+    public static final byte[] DEFAULT_PASSWORD_VERIFICATION_PREFIX = "MsgDuctEncPre".getBytes(CHARSET);
 
     private final byte[] passwordVerificationPrefix;
 
@@ -40,28 +42,48 @@ public abstract class SymmetricEncryptionBase implements SymmetricEncryption {
         this.passwordVerificationPrefix = passwordVerificationPrefix;
     }
 
-    @Override public final byte[] encrypt(byte[] plaintextData, char[] password) {
+    @Override
+    public byte[] generateNewRandomKey() {
+        byte key[] = new byte[getKeyLengthBits() / 8];
+        final SecureRandom secureRandom = new SecureRandom();
+        secureRandom.nextBytes(key);
+        return key;
+    }
+
+    @Override
+    public final byte[] encrypt(byte[] plaintextData, final byte[] key) {
         notNull(plaintextData, "plaintextData");
-        notNull(password, "password");
+        notNull(key, "key");
+        equal(key.length * 8, "Length of given key, in bits", getKeyLengthBits(), "Required key length, in bits");
 
         // Add password verification prefix if specified
         plaintextData = EncryptionUtils.addPasswordVerificationPrefix(plaintextData, passwordVerificationPrefix);
 
         // Encrypt data
-        return doEncrypt(plaintextData, password);
+        return doEncrypt(plaintextData, key);
     }
 
-    @Override public final byte[] decrypt(byte[] encryptedData, char[] password) throws WrongPasswordException {
+    @Override
+    public final byte[] decrypt(final byte[] encryptedData, final byte[] key) throws WrongPasswordException {
         notNull(encryptedData, "encryptedData");
-        notNull(password, "password");
+        notNull(key, "key");
+        equal(key.length*8, "Length of given key, in bits", getKeyLengthBits(), "Required key length, in bits");
 
         // Decrypt data
-        byte[] decryptedData = doDecrypt(encryptedData, password);
+        byte[] decryptedData = doDecrypt(encryptedData, key);
 
         // Verify the password and remove the verification prefix.
         decryptedData = EncryptionUtils.verifyPasswordVerificationPrefix(decryptedData, passwordVerificationPrefix, "password");
 
         return decryptedData;
+    }
+
+    @Override public final byte[] encrypt(byte[] plaintextData, char[] password) {
+        return encrypt(plaintextData, generateKey(password));
+    }
+
+    @Override public final byte[] decrypt(byte[] encryptedData, char[] password) throws WrongPasswordException {
+        return decrypt(encryptedData, generateKey(password));
     }
 
     @Override public final String encrypt(String plaintextString, char[] password) {
@@ -98,19 +120,24 @@ public abstract class SymmetricEncryptionBase implements SymmetricEncryption {
      * Do actual encryption.
      *
      * @param plaintextData data to encrypt
-     * @param password password to use
+     * @param key to use.  Must be of correct length.
      * @return encrypted data.
      */
-    protected abstract byte[] doEncrypt(byte[] plaintextData, char[] password);
+    protected abstract byte[] doEncrypt(byte[] plaintextData, byte[] key);
 
     /**
      * Do actual decryption.
      *
      * @param encryptedData data to decrypt
-     * @param password password to use
+     * @param key to use.  Must be of correct length.
      * @return decrypted data.
      */
-    protected abstract byte[] doDecrypt(byte[] encryptedData, char[] password);
+    protected abstract byte[] doDecrypt(byte[] encryptedData, byte[] key);
 
+    /**
+     * @param password password to use for generating the key.
+     * @return a key of the correct length for the cipher used, based on the specified password.
+     */
+    protected abstract byte[] generateKey(char[] password);
 
 }

@@ -11,7 +11,6 @@ import java.security.PublicKey;
 import java.util.Random;
 
 import static org.junit.Assert.*;
-import static org.junit.Assert.assertEquals;
 
 public class EncryptionTest {
 
@@ -84,16 +83,16 @@ public class EncryptionTest {
 
     @Test
     public void testLotsOfEncryption() throws Exception {
-        encryptALot(250, 5000, 1000);
+        encryptALot(50, 5000, 1000);
     }
 
     @Test
     public void testConcurrentEncryption() throws Exception {
         TestUtils.testConcurrently("Encryption should be thread safe", 10, 1, new TestRun() {
             @Override public void run() throws Exception {
-                encryptALot(50, 5000, 1000);
-                encryptALot(50, 5000, 10);
-                encryptALot(50, 50, 10);
+                encryptALot(20, 2000, 500);
+                encryptALot(20, 2000, 10);
+                encryptALot(20, 50, 10);
             }
         });
     }

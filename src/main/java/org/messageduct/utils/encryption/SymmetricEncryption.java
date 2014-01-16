@@ -7,6 +7,47 @@ package org.messageduct.utils.encryption;
 public interface SymmetricEncryption {
 
     /**
+     * @return key length used by this encryption, specified in bits (not bytes).
+     */
+    int getKeyLengthBits();
+
+    /**
+     * @return block length used by this encryption, specified in bits (not bytes).
+     *         The initialization vector must be this length.
+     */
+    int getBlockLengthBits();
+
+    /**
+     * @return a new random key of suitable length for this symmetric encryption.
+     */
+    byte[] generateNewRandomKey();
+
+    /**
+     * Encrypt a byte array.
+     *
+     * Note that this might be somewhat inefficient for frequent use on small arrays,
+     * as it re-creates the needed encryption key on each call.
+     *
+     * @param plaintextData non-encrypted data to encrypt.
+     * @param key key to use when encrypting.  Must be the correct length for the cipher.
+     * @return new byte array with the encrypted data.
+     */
+    byte[] encrypt(byte[] plaintextData, byte[] key);
+
+    /**
+     * Decrypt a byte array.
+     *
+     * Note that this might be somewhat inefficient for frequent use on small strings,
+     * as it re-creates the needed decryption key on each call.
+     *
+     * @param encryptedData encrypted text to decrypt, stored in base64 format.
+     * @param key key to use when decrypting.  Must be of the correct length for this chipher.
+     * @return the decrypted text.
+     * @throws WrongPasswordException if the password was incorrect, and password detection is enabled.
+     */
+    byte[] decrypt(byte[] encryptedData, byte[] key) throws WrongPasswordException;
+
+    /**
      * Encrypt a byte array.
      *
      * Note that this might be somewhat inefficient for frequent use on small arrays,

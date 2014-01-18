@@ -27,6 +27,7 @@ import static org.messageduct.common.mina.EncryptionHandler.State.*;
  * <li>Subsequent messages between the client and server are encrypted with the AES key, until the end of the session. </li>
  * <li>An unique RSA and AES key are created for each session. </li>
  * </ul>
+ * @deprecated can't handle writeMessage.
  */
 public class EncryptionHandler extends DelegatingHandler {
 

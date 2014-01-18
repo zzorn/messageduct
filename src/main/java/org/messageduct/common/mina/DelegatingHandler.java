@@ -10,6 +10,7 @@ import static org.flowutils.Check.notNull;
 
 /**
  * An IoHandler implementation that delegates messages to the specified delegate.
+ * @deprecated can't handle writeMessage.
  */
 // TODO: How to handle messages back to the session?  They'd need to be passed through this added on filter chain type thing as well
 public abstract class DelegatingHandler implements IoHandler {

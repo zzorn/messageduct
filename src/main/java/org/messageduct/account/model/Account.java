@@ -3,6 +3,7 @@ package org.messageduct.account.model;
 /**
  * Data about an user account.
  */
+// TODO: Refactor password, email, public/bitcoin keys into separate Authentication implementaions
 public interface Account {
 
     /**

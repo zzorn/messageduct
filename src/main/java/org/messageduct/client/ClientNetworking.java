@@ -1,9 +1,9 @@
 package org.messageduct.client;
 
 import org.flowutils.Symbol;
+import org.flowutils.service.Service;
 import org.messageduct.account.messages.CreateAccountMessage;
 import org.messageduct.client.serverinfo.ServerInfo;
-import org.messageduct.utils.service.Service;
 
 /**
  * Client side networking service.

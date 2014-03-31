@@ -1,9 +1,9 @@
 package org.messageduct.account;
 
+import org.flowutils.service.ServiceBase;
 import org.messageduct.account.messages.AccountErrorMessage;
 import org.messageduct.account.messages.AccountMessage;
 import org.messageduct.account.messages.AccountResponseMessage;
-import org.messageduct.utils.service.ServiceBase;
 
 import java.util.Map;
 import java.util.Set;

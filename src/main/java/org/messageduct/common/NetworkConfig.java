@@ -1,6 +1,6 @@
 package org.messageduct.common;
 
-import org.messageduct.utils.serializer.ConcurrentSerializer;
+import org.flowutils.serializer.ConcurrentSerializer;
 
 import java.util.Collection;
 import java.util.Set;

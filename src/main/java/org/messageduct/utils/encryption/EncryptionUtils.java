@@ -1,7 +1,7 @@
 package org.messageduct.utils.encryption;
 
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
-import org.messageduct.utils.ByteArrayUtils;
+import org.flowutils.ByteArrayUtils;
 
 import java.security.Security;
 

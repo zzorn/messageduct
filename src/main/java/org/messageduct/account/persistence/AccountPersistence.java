@@ -1,7 +1,7 @@
 package org.messageduct.account.persistence;
 
+import org.flowutils.service.Service;
 import org.messageduct.account.model.Account;
-import org.messageduct.utils.service.Service;
 
 /**
  * Interface for storage services required by the AccountService.

@@ -1,8 +1,9 @@
 package org.messageduct.utils;
 
 import org.apache.mina.util.ConcurrentHashSet;
+import org.bouncycastle.util.Strings;
 import org.flowutils.Check;
-import org.flowutils.Strings;
+import org.flowutils.StringUtils;
 
 import java.util.*;
 
@@ -86,7 +87,7 @@ public class UsernameValidator implements StringValidator {
     @Override public String check(String userName) {
         if (userName.length() < minUsernameLength) return "The username must be longer than "+minUsernameLength+" characters";
         if (userName.length() > maxUsernameLength) return "The username must be shorter than "+maxUsernameLength+" characters";
-        if (!Strings.isStrictIdentifier(userName)) return "The username must start with a letter or underscore and contain only letters, underscores or numbers.";
+        if (!StringUtils.isStrictIdentifier(userName)) return "The username must start with a letter or underscore and contain only letters, underscores or numbers.";
         if (isForbiddenUserName(userName)) return "The username '"+userName+"' is not allowed";
 
         // Username was ok

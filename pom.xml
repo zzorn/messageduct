@@ -36,7 +36,7 @@
         <dependency>
             <groupId>org.flowutils</groupId>
             <artifactId>flowutils</artifactId>
-            <version>0.1.11</version>
+            <version>0.1.14</version>
         </dependency>
 
         <!-- For networking -->

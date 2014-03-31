@@ -1,12 +1,12 @@
 package org.messageduct.utils.storage;
 
-import org.messageduct.utils.StreamUtils;
+import org.flowutils.StreamUtils;
+import org.flowutils.serializer.KryoSerializer;
+import org.flowutils.serializer.Serializer;
 import org.messageduct.utils.encryption.AesEncryption;
 import org.messageduct.utils.encryption.AesEncryption;
 import org.messageduct.utils.encryption.SymmetricEncryption;
 import org.messageduct.utils.encryption.WrongPasswordException;
-import org.messageduct.utils.serializer.KryoSerializer;
-import org.messageduct.utils.serializer.Serializer;
 
 import java.io.*;
 

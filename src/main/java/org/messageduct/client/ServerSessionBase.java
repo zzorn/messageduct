@@ -2,9 +2,9 @@ package org.messageduct.client;
 
 import org.apache.mina.util.ConcurrentHashSet;
 import org.flowutils.Check;
+import org.flowutils.ThreadUtils;
 import org.messageduct.account.messages.*;
 import org.messageduct.client.serverinfo.ServerInfo;
-import org.messageduct.utils.ThreadUtils;
 
 import java.util.Deque;
 import java.util.Set;
@@ -262,7 +262,7 @@ public abstract class ServerSessionBase implements ServerSession {
 
 
     private void ensureNotDisconnected() {
-        if (disconnectCalled) throw new IllegalStateException("Can not invoke " + ThreadUtils.getNameOfCallingMethod() + ", disconnect has already been called");
-        if (gotDisconnected) throw new IllegalStateException("Can not invoke " + ThreadUtils.getNameOfCallingMethod() + ", was disconnected");
+        if (disconnectCalled) throw new IllegalStateException("Can not invoke " + ThreadUtils.getCallingMethodName() + ", disconnect has already been called");
+        if (gotDisconnected) throw new IllegalStateException("Can not invoke " + ThreadUtils.getCallingMethodName() + ", was disconnected");
     }
 }

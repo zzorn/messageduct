@@ -1,8 +1,8 @@
 package org.messageduct.account;
 
+import org.flowutils.service.Service;
 import org.messageduct.account.messages.AccountMessage;
 import org.messageduct.account.messages.AccountResponseMessage;
-import org.messageduct.utils.service.Service;
 
 
 /**

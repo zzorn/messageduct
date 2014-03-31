@@ -2,13 +2,13 @@ package org.messageduct.client.mina;
 
 import org.apache.mina.util.ConcurrentHashSet;
 import org.flowutils.Symbol;
+import org.flowutils.service.ServiceBase;
 import org.messageduct.account.messages.CreateAccountMessage;
 import org.messageduct.client.ClientNetworking;
 import org.messageduct.client.serverinfo.ServerInfo;
 import org.messageduct.client.ServerListener;
 import org.messageduct.client.ServerSession;
 import org.messageduct.common.NetworkConfig;
-import org.messageduct.utils.service.ServiceBase;
 
 import java.util.Set;
 

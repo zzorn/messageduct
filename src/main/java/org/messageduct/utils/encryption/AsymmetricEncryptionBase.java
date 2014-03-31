@@ -2,10 +2,8 @@ package org.messageduct.utils.encryption;
 
 import org.apache.commons.codec.binary.Base64;
 import org.flowutils.Check;
-import org.messageduct.utils.ByteArrayUtils;
-import org.messageduct.utils.StreamUtils;
-import org.messageduct.utils.serializer.KryoSerializer;
-import org.messageduct.utils.serializer.Serializer;
+import org.flowutils.serializer.KryoSerializer;
+import org.flowutils.serializer.Serializer;
 
 import java.io.IOException;
 import java.io.InputStream;

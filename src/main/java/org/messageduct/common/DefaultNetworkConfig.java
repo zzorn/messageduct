@@ -1,10 +1,10 @@
 package org.messageduct.common;
 
 import org.flowutils.Check;
+import org.flowutils.serializer.ConcurrentSerializer;
+import org.flowutils.serializer.ConcurrentSerializerWrapper;
+import org.flowutils.serializer.KryoSerializer;
 import org.messageduct.account.messages.*;
-import org.messageduct.utils.serializer.ConcurrentSerializer;
-import org.messageduct.utils.serializer.ConcurrentSerializerWrapper;
-import org.messageduct.utils.serializer.KryoSerializer;
 
 import java.util.*;
 

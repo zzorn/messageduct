@@ -9,7 +9,7 @@ import org.bouncycastle.crypto.paddings.PaddedBufferedBlockCipher;
 import org.bouncycastle.crypto.paddings.TBCPadding;
 import org.bouncycastle.crypto.params.KeyParameter;
 import org.bouncycastle.crypto.params.ParametersWithIV;
-import org.messageduct.utils.ByteArrayUtils;
+import org.flowutils.ByteArrayUtils;
 
 import javax.crypto.Cipher;
 import javax.crypto.SecretKey;

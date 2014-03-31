@@ -9,6 +9,7 @@ import org.apache.mina.filter.firewall.BlacklistFilter;
 import org.apache.mina.filter.firewall.ConnectionThrottleFilter;
 import org.apache.mina.filter.firewall.Subnet;
 import org.apache.mina.transport.socket.nio.NioSocketAcceptor;
+import org.flowutils.service.ServiceBase;
 import org.messageduct.account.AccountService;
 import org.messageduct.account.DefaultAccountService;
 import org.messageduct.account.persistence.StorageAccountPersistence;
@@ -16,7 +17,6 @@ import org.messageduct.common.NetworkConfig;
 import org.messageduct.common.mina.MinaFilterChainBuilder;
 import org.messageduct.server.MessageListener;
 import org.messageduct.server.ServerNetworking;
-import org.messageduct.utils.service.ServiceBase;
 
 import java.io.File;
 import java.io.IOException;

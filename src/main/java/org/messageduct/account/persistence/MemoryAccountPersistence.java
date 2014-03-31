@@ -1,7 +1,7 @@
 package org.messageduct.account.persistence;
 
+import org.flowutils.service.ServiceBase;
 import org.messageduct.account.model.Account;
-import org.messageduct.utils.service.ServiceBase;
 
 import java.util.Collections;
 import java.util.Map;

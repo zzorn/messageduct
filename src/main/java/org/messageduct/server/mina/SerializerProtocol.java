@@ -3,7 +3,7 @@ package org.messageduct.server.mina;
 import org.apache.mina.core.buffer.IoBuffer;
 import org.apache.mina.core.session.IoSession;
 import org.apache.mina.filter.codec.*;
-import org.messageduct.utils.serializer.ConcurrentSerializer;
+import org.flowutils.serializer.ConcurrentSerializer;
 
 /**
  * Uses a specified serializer to encode classes for transport over the network.

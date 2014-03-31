@@ -1,8 +1,8 @@
 package org.messageduct.server;
 
 import org.apache.mina.filter.firewall.Subnet;
+import org.flowutils.service.Service;
 import org.messageduct.account.AccountService;
-import org.messageduct.utils.service.Service;
 
 import java.net.InetAddress;
 import java.util.Set;

@@ -1,5 +1,6 @@
 package org.messageduct.utils;
 
+import com.sun.xml.internal.fastinfoset.util.CharArray;
 import org.flowutils.Check;
 
 import java.util.*;
@@ -12,6 +13,7 @@ import java.util.*;
 // TODO: We could check that the password has more than N different characters as well
 // TODO: We could maybe do a password strength calculator as well
 // TODO: Could maybe load a dictionary from a file too, but at that point it might be easier to just use a cracking library to test.
+// TODO: Check that the password does not contain the username
 public final class PasswordValidatorImpl implements PasswordValidator {
 
     public static final int DEFAULT_MIN_PASSWORD_LENGTH = 12;
@@ -200,6 +202,7 @@ public final class PasswordValidatorImpl implements PasswordValidator {
 
         // Check against username
         if (equalsIgnoreCase(userName, password)) return "Password and username can not be the same.";
+        if (userName.contains(wrapInCharArray(password))) return "The username can not contain the password.";
 
         // Check that not all the same character
         if (containsOnlyOneChar(password)) return "The password can not be all the same character.";
@@ -209,6 +212,10 @@ public final class PasswordValidatorImpl implements PasswordValidator {
         if (containedInDictionary(password, DEFAULT_DICTIONARY)) return "The password is not acceptable because it matches a known common password or dictionary word";
 
         return null;
+    }
+
+    private CharArray wrapInCharArray(char[] chars) {
+        return new CharArray(chars, 0, chars.length, false);
     }
 
     private boolean containedInDictionary(char[] password, final List<String> dictionary) {

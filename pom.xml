@@ -36,8 +36,16 @@
         <dependency>
             <groupId>org.flowutils</groupId>
             <artifactId>flowutils</artifactId>
-            <version>0.1.14</version>
+            <version>0.1.85</version>
         </dependency>
+
+        <!-- For network communication -->
+        <dependency>
+            <groupId>io.netty</groupId>
+            <artifactId>netty-all</artifactId>
+            <version>4.0.28.Final</version>
+        </dependency>
+
 
         <!-- For networking -->
         <!--

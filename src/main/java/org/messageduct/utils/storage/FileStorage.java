@@ -1,9 +1,8 @@
 package org.messageduct.utils.storage;
 
-import org.flowutils.StreamUtils;
 import org.flowutils.serializer.KryoSerializer;
 import org.flowutils.serializer.Serializer;
-import org.messageduct.utils.encryption.AesEncryption;
+import org.messageduct.utils.FileUtils;
 import org.messageduct.utils.encryption.AesEncryption;
 import org.messageduct.utils.encryption.SymmetricEncryption;
 import org.messageduct.utils.encryption.WrongPasswordException;
@@ -35,7 +34,7 @@ public final class FileStorage extends SynchronizedStorage {
      * @param file file to save the data to.
      */
     public FileStorage(File file) {
-        this(file, null);
+        this(file, null, new KryoSerializer(false), null);
     }
 
     /**
@@ -56,7 +55,7 @@ public final class FileStorage extends SynchronizedStorage {
      * @param serializer serializer used to serialize the object saved.
      */
     public FileStorage(File file, char[] password, Serializer serializer) {
-        this(file, password, serializer, new AesEncryption(), createTempFileName(file));
+        this(file, password, serializer, new AesEncryption(), FileUtils.createTempFileName(file));
     }
 
     /**
@@ -69,7 +68,7 @@ public final class FileStorage extends SynchronizedStorage {
      *                           If a non-null password is provided, an encryptionProvider has to be provided.
      */
     public FileStorage(File file, char[] password, Serializer serializer, SymmetricEncryption symmetricEncryption) {
-        this(file, password, serializer, symmetricEncryption, createTempFileName(file));
+        this(file, password, serializer, symmetricEncryption, FileUtils.createTempFileName(file));
     }
 
     /**
@@ -105,42 +104,8 @@ public final class FileStorage extends SynchronizedStorage {
             data = symmetricEncryption.encrypt(data, password);
         }
 
-        // Save to temp file
-        OutputStream outputStream = new BufferedOutputStream(new FileOutputStream(tempFile, false));
-        try {
-            outputStream.write(data);
-            outputStream.flush();
-        } finally {
-            outputStream.close();
-        }
-
-        // Sanity check (e.g. if file system just pretends to write things)
-        if (!tempFile.exists()) throw new IllegalStateException("The temp file ("+tempFile+") we just saved the stored object to does not exist anymore!");
-
-        // Check that the written file matches the data
-        InputStream inputStream = new BufferedInputStream(new FileInputStream(tempFile));
-        final byte[] writtenFileData;
-        try {
-            writtenFileData = StreamUtils.readBytesFromInputStream(inputStream);
-        }
-        finally {
-            inputStream.close();
-        }
-
-        if (writtenFileData.length != data.length) throw new IOException("The contents of the temp file ("+tempFile+") does not match the data written there! (different length)");
-        for (int i = 0; i < data.length; i++) {
-            if (data[i] != writtenFileData[i]) throw new IOException("The contents of the temp file ("+tempFile+") does not match the data written there! (different data at byte "+i+")");
-        }
-
-        // Delete the real file
-        if (file.exists() && !file.delete()) {
-            throw new IOException("Could not delete the storage file ("+file+") so that we could replace it with the temporary file ("+tempFile+") with new data.");
-        }
-
-        // Replace real file with temp file
-        if (!tempFile.renameTo(file)) {
-            throw new IOException("Could not rename the temporary storage file ("+tempFile+") to the real storage file ("+file+").  "+tempFile+" now contains the only copy of the data, move it to another name to avoid it getting overwritten!");
-        }
+        // Save the data, making sure it actually got saved
+        FileUtils.saveAndCheck(data, file, tempFile);
     }
 
 
@@ -149,14 +114,7 @@ public final class FileStorage extends SynchronizedStorage {
         if (!file.exists()) return null;
 
         // Load file contents
-        InputStream inputStream = new BufferedInputStream(new FileInputStream(file));
-        byte[] data;
-        try {
-            data = StreamUtils.readBytesFromInputStream(inputStream);
-        }
-        finally {
-            inputStream.close();
-        }
+        byte[] data = FileUtils.loadData(file);
 
         // Decrypt if we have password specified
         if (symmetricEncryption != null && password != null) {
@@ -171,7 +129,4 @@ public final class FileStorage extends SynchronizedStorage {
         return serializer.deserialize(data);
     }
 
-    private static File createTempFileName(File file) {
-        return new File(file.getPath() + ".temp");
-    }
 }

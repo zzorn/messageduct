@@ -1,6 +1,7 @@
-package org.messageduct.client.serverinfo;
+package org.messageduct.serverinfo;
 
 import java.net.InetSocketAddress;
+import java.security.PublicKey;
 
 /**
  * Information about a server stored on a client.
@@ -36,4 +37,14 @@ public interface ServerInfo {
      * @param address internet address or hostname of the server and the port to connect to.
      */
     void setAddress(InetSocketAddress address);
+
+    /**
+     * @return public key of the server, used by the client to identify the server and avoid man-in-the-middle attacks.
+     */
+    PublicKey getPublicKey();
+
+    /**
+     * @param publicKey public key of the server, used by the client to identify the server and avoid man-in-the-middle attacks.
+     */
+    void setPublicKey(PublicKey publicKey);
 }

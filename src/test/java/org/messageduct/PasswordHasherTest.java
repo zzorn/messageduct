@@ -16,16 +16,16 @@ public class PasswordHasherTest {
     }
 
     private void checkHasher(final PasswordHasher passwordHasher) {
-
         checkPassword(passwordHasher, "HUNTER123!");
-        checkPassword(passwordHasher, "");
+        checkPassword(passwordHasher, " ");
         checkPassword(passwordHasher, " really long password with spaces and stuff.. \"\nfoo");
     }
 
     private void checkPassword(PasswordHasher passwordHasher, final String password) {
         final String hash = passwordHasher.hashPassword(password.toCharArray());
         assertTrue(passwordHasher.isCorrectPassword(password.toCharArray(), hash));
-        assertTrue(!passwordHasher.isCorrectPassword(" ".toCharArray(), hash));
+        assertTrue(!passwordHasher.isCorrectPassword("".toCharArray(), hash));
+        assertTrue(!passwordHasher.isCorrectPassword("  ".toCharArray(), hash));
         assertTrue(!passwordHasher.isCorrectPassword("foo".toCharArray(), hash));
     }
 }

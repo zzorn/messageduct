@@ -6,30 +6,27 @@ import org.messageduct.account.messages.LoginSuccessMessage;
 
 /**
  * Adapter for ServerListener.
- * Override the message you are interested in.
+ * Override the message(s) you are interested in.
  */
 public abstract class ServerListenerAdapter implements ServerListener {
-    @Override public void onMessage(ServerSession serverSession, Object message) {
+    @Override public void onMessage(ClientNetworking clientNetworking, Object message) {
     }
 
-    @Override public void onConnected(ServerSession serverSession) {
+    @Override public void onConnected(ClientNetworking clientNetworking) {
     }
 
-    @Override public void onDisconnected(ServerSession serverSession) {
+    @Override public void onDisconnected(ClientNetworking clientNetworking) {
     }
 
-    @Override public void onIdle(ServerSession serverSession) {
+    @Override public void onLoggedIn(ClientNetworking clientNetworking, LoginSuccessMessage loginSuccessMessage) {
     }
 
-    @Override public void onLoggedIn(ServerSession serverSession, LoginSuccessMessage loginSuccessMessage) {
+    @Override public void onAccountCreated(ClientNetworking clientNetworking, CreateAccountSuccessMessage createAccountSuccessMessage) {
     }
 
-    @Override public void onAccountCreated(ServerSession serverSession, CreateAccountSuccessMessage createAccountSuccessMessage) {
+    @Override public void onAccountErrorMessage(ClientNetworking clientNetworking, AccountErrorMessage accountErrorMessage) {
     }
 
-    @Override public void onAccountErrorMessage(ServerSession serverSession, AccountErrorMessage accountErrorMessage) {
-    }
-
-    @Override public void onException(ServerSession serverSession, Throwable e) {
+    @Override public void onException(ClientNetworking clientNetworking, Throwable e) {
     }
 }

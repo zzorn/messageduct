@@ -219,9 +219,8 @@ public final class PasswordValidatorImpl implements PasswordValidator {
     }
 
     private boolean containedInDictionary(char[] password, final List<String> dictionary) {
-        final int dictionarySize = dictionary.size();
-        for (int i = 0; i < dictionarySize; i++) {
-            if (equalsIgnoreCase(dictionary.get(i), password)) return true;
+        for (String dictionaryWord : dictionary) {
+            if (equalsIgnoreCase(dictionaryWord, password)) return true;
         }
         return false;
     }

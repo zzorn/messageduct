@@ -11,7 +11,6 @@ public class DefaultAccount implements Account {
     private String passwordHash;
     private String email;
     private String publicKey;
-    private String bitcoinAddress;
 
     /**
      * Only used by serialization.
@@ -25,15 +24,14 @@ public class DefaultAccount implements Account {
     }
 
     public DefaultAccount(String userName, String passwordHash, String email) {
-        this(userName, passwordHash, email, null, null);
+        this(userName, passwordHash, email, null);
     }
 
-    public DefaultAccount(String userName, String passwordHash, String email, String publicKey, String bitcoinAddress) {
+    public DefaultAccount(String userName, String passwordHash, String email, String publicKey) {
         this.userName = userName;
         this.passwordHash = passwordHash;
         this.email = email;
         this.publicKey = publicKey;
-        this.bitcoinAddress = bitcoinAddress;
     }
 
     @Override public String getUserName() {
@@ -50,10 +48,6 @@ public class DefaultAccount implements Account {
 
     @Override public String getPublicKey() {
         return publicKey;
-    }
-
-    @Override public String getBitcoinAddress() {
-        return bitcoinAddress;
     }
 
 

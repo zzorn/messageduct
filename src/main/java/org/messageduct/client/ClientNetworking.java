@@ -1,68 +1,132 @@
 package org.messageduct.client;
 
-import org.flowutils.Symbol;
-import org.flowutils.service.Service;
 import org.messageduct.account.messages.CreateAccountMessage;
-import org.messageduct.client.serverinfo.ServerInfo;
+import org.messageduct.common.NetworkConfig;
+import org.messageduct.serverinfo.ServerInfo;
+
+import java.net.InetSocketAddress;
 
 /**
- * Client side networking service.
+ * Represents a connection to a server.
+ * It supports one lifecycle only, connect, communication, and disconnect.
+ * After disconnect it can no longer reconnect, a new ServerSession is needed for that.
  */
-public interface ClientNetworking extends Service {
+public interface ClientNetworking {
 
     /**
-     * Connect to the specified server.
+     * Starts connecting to the specified server using the specified network configuration parameters.
+     * Any listeners are notified when the connection is completed, or if there is some problem when connecting.
      *
-     * @param serverInfo contains the server internet address and port.
-     * @param listener listener that is notified about messages from the server, and connect / disconnect events.
-     * @return session that can be used to send messages to the server.
+     * @param networkConfig network configuration to use.
+     * @param hostname hostname of server to connect to.
+     * @param port port of server to connect to.
      */
-    ServerSession connect(ServerInfo serverInfo, ServerListener listener);
+    void connect(NetworkConfig networkConfig, String hostname, int port);
 
     /**
-     * Connect to the specified server, and attempt to log in to an existing account.
+     * Starts connecting to the specified server using the specified network configuration parameters.
+     * Any listeners are notified when the connection is completed, or if there is some problem when connecting.
      *
-     * @param serverInfo contains the server internet address and port.
-     * @param accountName name of account to log into.
+     * @param networkConfig network configuration to use.
+     * @param serverAddress server address to connect to.
+     */
+    void connect(NetworkConfig networkConfig, InetSocketAddress serverAddress);
+
+    /**
+     * Starts connecting to the specified server using the specified network configuration parameters.
+     * Any listeners are notified when the connection is completed, or if there is some problem when connecting.
+     *
+     * @param networkConfig network configuration to use.
+     * @param serverInfo information about the server we are going to connect to.
+     */
+    void connect(NetworkConfig networkConfig, ServerInfo serverInfo);
+
+    /**
+     * Disconnect from the server if not already disconnected.
+     */
+    void disconnect();
+
+    /**
+     * Initiates a login handshake.
+     * Connect must have been called first, although the connection does not yet need to be ready
+     * (the login is queued if the connection is still ongoing).
+     *
+     * @param accountName account name.
      * @param password password for the account.
-     * @param listener listener that is notified about messages from the server, and connect / disconnect events.
-     * @return session that can be used to send messages to the server.
      */
-    ServerSession login(ServerInfo serverInfo, String accountName, char[] password, ServerListener listener);
+    void login(String accountName, char[] password);
 
     /**
-     * Connect to the specified server, and attempt to create a new account.
+     * Initiates an account creation request.
+     * Connect must have been called first, although the connection does not yet need to be ready
+     * (the account creation message is queued if the connection is still ongoing).
      *
-     * @param serverInfo contains the server internet address and port.
-     * @param accountName account name for the new account.
-     * @param password password for the new account.
-     * @param listener listener that is notified about messages from the server, and connect / disconnect events.
-     * @return session that can be used to send messages to the server.
+     * @param accountName desired account name.
+     * @param password password for the account.
      */
-    ServerSession createAccount(ServerInfo serverInfo, String accountName, char[] password, ServerListener listener);
+    void createAccount(String accountName, char[] password);
 
     /**
-     * Connect to the specified server, and attempt to create a new account.
+     * Initiates an account creation request.
+     * Connect must have been called first, although the connection does not yet need to be ready
+     * (the account creation message is queued if the connection is still ongoing).
      *
-     * @param serverInfo contains the server internet address and port.
-     * @param accountName account name for the new account.
-     * @param password password for the new account.
+     * @param accountName desired account name.
+     * @param password password for the account.
      * @param email email to use for password recovery and updates.
-     * @param listener listener that is notified about messages from the server, and connect / disconnect events.
-     * @return session that can be used to send messages to the server.
      */
-    ServerSession createAccount(ServerInfo serverInfo, String accountName, char[] password, String email, ServerListener listener);
+    void createAccount(String accountName, char[] password, String email);
 
     /**
-     * Connect to the specified server, and attempt to create a new account.
+     * Initiates an account creation request.
+     * Connect must have been called first, although the connection does not yet need to be ready
+     * (the account creation message is queued if the connection is still ongoing).
      *
-     * @param serverInfo contains the server internet address and port.
      * @param createAccountMessage account creation details.
-     * @param listener listener that is notified about messages from the server, and connect / disconnect events.
-     * @return session that can be used to send messages to the server.
      */
-    ServerSession createAccount(ServerInfo serverInfo, CreateAccountMessage createAccountMessage, ServerListener listener);
+    void createAccount(CreateAccountMessage createAccountMessage);
 
+    /**
+     * Send a message to the server.  Queues the message if we are not yet connected.
+     * @param message message to send.
+     */
+    void sendMessage(Object message);
+
+    /**
+     * @param listener listener that gets notified about messages from the server.
+     */
+    void addListener(ServerListener listener);
+
+    /**
+     * @param listener listener to remove.
+     */
+    void removeListener(ServerListener listener);
+
+    /**
+     * @return information about the server we are connected to.
+     */
+    ServerInfo getServerInfo();
+
+    /**
+     * @return true if we are connected to the server (but not necessarily yet logged in).
+     */
+    boolean isConnected();
+
+    /**
+     * @return true if we are connected to the server and logged in to an account.
+     */
+    boolean isLoggedIn();
+
+    /**
+     * @return true if we got disconnected from the server, or if we disconnected from it ourselves.
+     * After disconnection this ServerSession can no longer be used.
+     */
+    boolean isDisconnected();
+
+    /**
+     * @return the account we are logged in as, or trying to log in as, or null if not yet specified.
+     */
+    String getAccountName();
 
 
 }

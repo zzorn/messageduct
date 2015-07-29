@@ -1,6 +1,7 @@
 package org.messageduct.account.persistence;
 
 import org.flowutils.service.ServiceBase;
+import org.flowutils.service.ServiceProvider;
 import org.messageduct.account.model.Account;
 
 import java.util.Collections;
@@ -33,7 +34,7 @@ public class MemoryAccountPersistence extends ServiceBase implements AccountPers
         }
     }
 
-    @Override protected void doInit() {
+    @Override protected void doInit(ServiceProvider serviceProvider) {
         // Nothing to do
     }
 

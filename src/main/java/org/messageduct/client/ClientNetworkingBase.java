@@ -1,11 +1,16 @@
 package org.messageduct.client;
 
 import org.apache.mina.util.ConcurrentHashSet;
-import org.flowutils.Check;
+import org.flowutils.LogUtils;
 import org.flowutils.ThreadUtils;
 import org.messageduct.account.messages.*;
-import org.messageduct.client.serverinfo.ServerInfo;
+import org.messageduct.common.NetworkConfig;
+import org.messageduct.serverinfo.DefaultServerInfo;
+import org.messageduct.serverinfo.ServerInfo;
+import org.messageduct.serverinfo.ServerInfoMessage;
+import org.slf4j.Logger;
 
+import java.net.InetSocketAddress;
 import java.util.Deque;
 import java.util.Set;
 import java.util.concurrent.ConcurrentLinkedDeque;
@@ -13,14 +18,15 @@ import java.util.concurrent.ConcurrentLinkedDeque;
 import static org.flowutils.Check.notNull;
 
 /**
- * Common functionality for ServerSessions.
+ * Common functionality for ClientNetworking.
  */
-public abstract class ServerSessionBase implements ServerSession {
+public abstract class ClientNetworkingBase implements ClientNetworking {
 
     private final Set<ServerListener> listeners = new ConcurrentHashSet<ServerListener>();
     private final Deque<Object> queuedMessages = new ConcurrentLinkedDeque<Object>();
+    private final Logger log = LogUtils.getLogger();
 
-    private final ServerInfo serverInfo;
+    private ServerInfo serverInfo;
     private String accountName = null;
 
     private boolean connectCalled = false;
@@ -29,83 +35,80 @@ public abstract class ServerSessionBase implements ServerSession {
     private boolean connected = false;
     private boolean loggedIn = false;
 
-    /**
-     * @param serverInfo information about the server we are going to connect to.  May be updated with new information from the server.
-     */
-    protected ServerSessionBase(ServerInfo serverInfo) {
+    @Override public final void connect(NetworkConfig networkConfig, String hostname, int port) {
+        connect(networkConfig, new DefaultServerInfo(hostname, port));
+    }
+
+    @Override public final void connect(NetworkConfig networkConfig, InetSocketAddress serverAddress) {
+        connect(networkConfig, new DefaultServerInfo(serverAddress));
+    }
+
+    @Override public final void connect(NetworkConfig networkConfig, ServerInfo serverInfo) {
+        notNull(networkConfig, "networkConfig");
         notNull(serverInfo, "serverInfo");
-
-        this.serverInfo = serverInfo;
-    }
-
-    @Override public final ServerInfo getServerInfo() {
-        return serverInfo;
-    }
-
-    @Override public final void connect() {
         ensureNotDisconnected();
         if (connectCalled) throw new IllegalStateException("Connect was already called");
 
+        log.info("Connecting to server " + serverInfo.getAddress());
         connectCalled = true;
-        doConnect();
+        doConnect(networkConfig, serverInfo);
     }
 
     @Override public final void disconnect() {
         if (!disconnectCalled) {
+            log.info("Disconnecting");
             disconnectCalled = true;
             doDisconnect();
         }
     }
 
     @Override public final void login(String accountName, char[] password) {
-
-        System.out.println("ServerSessionBase.login");
-
         ensureNotDisconnected();
         if (loggedIn) throw new IllegalStateException("Already logged in with account name " + this.accountName +", can not log in with account '" + accountName +"'");
+        if (!connectCalled) throw new IllegalStateException("connect should be called before login!");
+
+        // Store account name
         this.accountName = accountName;
 
-        // Send login message
+        // Send (or queue) login message
+        log.info("Logging into account '" + accountName + "'");
         sendMessage(new LoginMessage(accountName, password));
-
-        // Call connect if not already done
-        if (!connectCalled) connect();
     }
 
     @Override public final void createAccount(String accountName, char[] password) {
-        ensureNotDisconnected();
         createAccount(new CreateAccountMessage(accountName, password));
     }
 
     @Override public final void createAccount(String accountName, char[] password, String email) {
-        ensureNotDisconnected();
         createAccount(new CreateAccountMessage(accountName, password, email));
     }
 
     @Override public final void createAccount(CreateAccountMessage createAccountMessage) {
         ensureNotDisconnected();
         if (loggedIn) throw new IllegalStateException("Already logged in with account name " + this.accountName +", can not create a new account named '" + accountName + "'");
+        if (!connectCalled) throw new IllegalStateException("connect should be called before createAccount!");
+
+        // Store account name
         this.accountName = createAccountMessage.getUsername();
 
-        // Send account creation
+        // Send (or queue) account creation message
+        log.info("Creating new account '" + accountName + "'");
         sendMessage(createAccountMessage);
-
-        // Call connect if not already done
-        if (!connectCalled) connect();
     }
 
     @Override public final void sendMessage(Object message) {
-        Check.notNull(message, "message");
-
-        System.out.println("ServerSessionBase.sendMessage " + message);
+        notNull(message, "message");
+        if (!connectCalled) throw new IllegalStateException("connect should be called before sendMessage!");
+        if (isDisconnected()) {
+            log.debug("Disconnected, so ignoring message.");
+            return;
+        }
 
         // Queue messages if we are not connected
         if (!isConnected()) {
-            System.out.println("   queued"  );
             queuedMessages.add(message);
         }
         else {
-            System.out.println("   sent"  );
             doSendMessage(message);
         }
     }
@@ -114,12 +117,20 @@ public abstract class ServerSessionBase implements ServerSession {
         return accountName;
     }
 
+    @Override public final ServerInfo getServerInfo() {
+        return serverInfo;
+    }
+
     @Override public final boolean isLoggedIn() {
         return loggedIn;
     }
 
     @Override public final boolean isConnected() {
         return connected;
+    }
+
+    @Override public final boolean isDisconnected() {
+        return disconnectCalled || gotDisconnected;
     }
 
     @Override public final void addListener(ServerListener listener) {
@@ -148,7 +159,17 @@ public abstract class ServerSessionBase implements ServerSession {
             onAccountErrorMessage((AccountErrorMessage) message);
         }
         else {
-            // Normal message
+            // Handle ServerInfoMessage
+            if (message instanceof ServerInfoMessage) {
+                // Store server info
+                final ServerInfo serverInfoFromServer = ((ServerInfoMessage) message).getServerInfo();
+                // TODO: Check that server info signature and public key matches with server public key, if we know it.
+                if (serverInfoFromServer != null) {
+                    serverInfo = serverInfoFromServer;
+                }
+            }
+
+            // Forward normal message to listeners
             for (ServerListener listener : listeners) {
                 listener.onMessage(this, message);
             }
@@ -159,20 +180,21 @@ public abstract class ServerSessionBase implements ServerSession {
      * Call when a connection is established to the server, but not necessarily yet logged in.
      */
     protected final void onConnected() {
-        System.out.println("ServerSessionBase.onConnected");
+        log.info("Connected to server");
+
         connected = true;
 
-        for (ServerListener listener : listeners) {
-            listener.onConnected(this);
-        }
-
         // Send queued messages
-        System.out.println("Sending queued messages: " + queuedMessages.size());
+        log.debug("Sending " + queuedMessages.size() + " queued messages");
         Object message = queuedMessages.poll();
         while (message != null) {
-            System.out.println("   message = " + message);
             doSendMessage(message);
             message = queuedMessages.poll();
+        }
+
+        // Notify listeners
+        for (ServerListener listener : listeners) {
+            listener.onConnected(this);
         }
     }
 
@@ -184,17 +206,10 @@ public abstract class ServerSessionBase implements ServerSession {
         loggedIn = false;
         gotDisconnected = true;
 
+        log.info("Disconnected from server");
+
         for (ServerListener listener : listeners) {
             listener.onDisconnected(this);
-        }
-    }
-
-    /**
-     * Call when no message has been sent or received for some time.
-     */
-    protected final void onIdle() {
-        for (ServerListener listener : listeners) {
-            listener.onIdle(this);
         }
     }
 
@@ -203,6 +218,8 @@ public abstract class ServerSessionBase implements ServerSession {
      */
     private void onLoggedIn(LoginSuccessMessage loginSuccessMessage) {
         loggedIn = true;
+
+        log.info("Logged into account '" + accountName + "'");
 
         for (ServerListener listener : listeners) {
             listener.onLoggedIn(this, loginSuccessMessage);
@@ -215,6 +232,8 @@ public abstract class ServerSessionBase implements ServerSession {
     private void onAccountCreated(CreateAccountSuccessMessage createAccountSuccessMessage) {
         loggedIn = true;
 
+        log.info("Account created '" + accountName + "'");
+
         for (ServerListener listener : listeners) {
             listener.onAccountCreated(this, createAccountSuccessMessage);
         }
@@ -224,6 +243,8 @@ public abstract class ServerSessionBase implements ServerSession {
      * Call when there was some error message from the server.
      */
     private void onAccountErrorMessage(AccountErrorMessage accountErrorMessage) {
+        log.info("Received account error message: " + accountErrorMessage);
+
         for (ServerListener listener : listeners) {
             listener.onAccountErrorMessage(this, accountErrorMessage);
         }
@@ -233,11 +254,7 @@ public abstract class ServerSessionBase implements ServerSession {
      * Call when there was some communication error or the like.
      */
     protected final void onException(Throwable e) {
-        // TODO: DEBUG, remove
-        System.out.println("ServerSessionBase.onException");
-        System.out.println("e = " + e);
-        e.printStackTrace();
-
+        log.error("Network problem: " + e + ": " + e.getMessage(), e);
 
         for (ServerListener listener : listeners) {
             listener.onException(this, e);
@@ -247,8 +264,10 @@ public abstract class ServerSessionBase implements ServerSession {
 
     /**
      * Connect to the server.
+     * @param networkConfig network and connection configuration to use.
+     * @param serverInfo information about the server to connect to, including the address and port (and public key if known).
      */
-    protected abstract void doConnect();
+    protected abstract void doConnect(NetworkConfig networkConfig, ServerInfo serverInfo);
 
     /**
      * Send the specified message to the server.

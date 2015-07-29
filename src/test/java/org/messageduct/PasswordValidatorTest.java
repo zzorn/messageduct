@@ -8,6 +8,8 @@ import org.messageduct.utils.PasswordValidatorImpl;
 
 public class PasswordValidatorTest {
 
+    private static final String USERNAME = "longusername";
+
     @Test
     public void testPasswordValidator() throws Exception {
         PasswordValidatorImpl passwordValidator = new PasswordValidatorImpl();
@@ -15,8 +17,12 @@ public class PasswordValidatorTest {
         passwordValidator.addDictionaryWord("commonsecret");
 
         checkPassword(passwordValidator, true,  "foobar123456");
+        checkPassword(passwordValidator, true,  "foobar123456");
         checkPassword(passwordValidator, true,  "SPEciUlCh4r4(€Ԇ<\n\\");
-        checkPassword(passwordValidator, false, "longusername");
+        checkPassword(passwordValidator, false, USERNAME);
+        checkPassword(passwordValidator, false, USERNAME.toUpperCase());
+        checkPassword(passwordValidator, false, USERNAME.toUpperCase().substring(3));
+// IDEA: Implement check for this as well        checkPassword(passwordValidator, false, "foo" + USERNAME.toUpperCase() + "bar");
         checkPassword(passwordValidator, false, "LongUsERnAme");
         checkPassword(passwordValidator, false, "commonsecret");
         checkPassword(passwordValidator, false, "juliusceasar");
@@ -45,6 +51,6 @@ public class PasswordValidatorTest {
     }
 
     private void checkPassword(PasswordValidator passwordValidator, boolean valid, final String password) {
-        assertEquals(valid, passwordValidator.check(password.toCharArray(), "longusername") == null);
+        assertEquals(valid, passwordValidator.check(password.toCharArray(), USERNAME) == null);
     }
 }

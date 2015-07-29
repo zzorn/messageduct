@@ -1,28 +1,28 @@
 package org.messageduct;
 
-import org.junit.Assert;
-
 import static org.junit.Assert.*;
 
+import org.flowutils.LogUtils;
 import org.junit.Test;
 import org.messageduct.account.DefaultAccountService;
 import org.messageduct.account.messages.AccountErrorMessage;
 import org.messageduct.account.messages.CreateAccountSuccessMessage;
 import org.messageduct.account.persistence.MemoryAccountPersistence;
-import org.messageduct.client.ClientNetworking;
-import org.messageduct.client.ServerListener;
 import org.messageduct.client.ServerListenerAdapter;
-import org.messageduct.client.ServerSession;
-import org.messageduct.client.mina.MinaClientNetworking;
-import org.messageduct.client.serverinfo.DefaultServerInfo;
+import org.messageduct.client.ClientNetworking;
+import org.messageduct.client.netty.NettyClientNetworking;
+import org.messageduct.server.netty.NettyServerNetworking;
+import org.messageduct.serverinfo.DefaultServerInfo;
 import org.messageduct.common.DefaultNetworkConfig;
-import org.messageduct.server.MessageListener;
 import org.messageduct.server.MessageListenerAdapter;
 import org.messageduct.server.ServerNetworking;
 import org.messageduct.server.UserSession;
-import org.messageduct.server.mina.MinaServerNetworking;
+import org.messageduct.utils.encryption.AsymmetricEncryption;
+import org.messageduct.utils.encryption.RsaEncryption;
+import org.slf4j.LoggerFactory;
 
 import java.awt.*;
+import java.security.KeyPair;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -36,6 +36,8 @@ public class NetworkingTest {
     @Test
     public void testMessageSending() throws Exception {
 
+        final String serverAddress = "localhost";
+
         final String username = "foo";
         final char[] password = "longsecritpass".toCharArray();
 
@@ -44,17 +46,21 @@ public class NetworkingTest {
         final AtomicBoolean clientLoggedIn = new AtomicBoolean(false);
         final AtomicReference<String> error = new AtomicReference<String>(null);
 
+        AsymmetricEncryption asymmetricEncryption = new RsaEncryption();
+        final KeyPair testServerKeys = asymmetricEncryption.createNewPublicPrivateKey();
 
         final DefaultNetworkConfig networkConfig = new DefaultNetworkConfig();
         networkConfig.registerAllowedClasses(Color.class,
                                              SayMessage.class,
                                              HearMessage.class);
-        networkConfig.setCompressionEnabled(true);
+        networkConfig.setCompressionEnabled(false);
         networkConfig.setEncryptionEnabled(false);
         networkConfig.setMessageLoggingEnabled(true);
+        networkConfig.setServerKeys(testServerKeys);
 
         final DefaultAccountService accountService = new DefaultAccountService(new MemoryAccountPersistence());
-        final ServerNetworking serverNetworking = new MinaServerNetworking(networkConfig, accountService, new MessageListenerAdapter() {
+        final DefaultServerInfo serverInfo = new DefaultServerInfo(serverAddress, networkConfig.getPort());
+        final ServerNetworking serverNetworking = new NettyServerNetworking(networkConfig, accountService, serverInfo, new MessageListenerAdapter() {
             @Override public void messageReceived(UserSession session, Object message) {
                 System.out.println("server.messageReceived");
                 System.out.println("message = " + message);
@@ -65,7 +71,9 @@ public class NetworkingTest {
                 }
 
                 // Send a response
-                session.sendMessage(new HearMessage(session.getUserName(), ((SayMessage)message).getText(), Color.GREEN));
+                session.sendMessage(new HearMessage(session.getUserName(),
+                                                    ((SayMessage) message).getText(),
+                                                    Color.GREEN));
             }
 
             @Override public void userDisconnected(UserSession session) {
@@ -81,11 +89,6 @@ public class NetworkingTest {
             @Override public void userCreated(UserSession session) {
                 System.out.println("server.userCreated");
             }
-
-            @Override public void userIdle(UserSession session) {
-                System.out.println("server.userIdle");
-                error.set("Server should not have gotten idle");
-            }
         });
 
         Thread serverThread = new Thread(new Runnable() {
@@ -100,31 +103,22 @@ public class NetworkingTest {
         });
 
 
-        final ClientNetworking clientNetworking = new MinaClientNetworking(networkConfig);
+        final ClientNetworking clientNetworking = new NettyClientNetworking();
+
         Thread clientThread = new Thread(new Runnable() {
             @Override public void run() {
 
+                final DefaultServerInfo serverInfo = new DefaultServerInfo(serverAddress, networkConfig.getPort());
 
-                System.out.println("Calling client init");
-                clientNetworking.init();
-                System.out.println("Client init called");
-
-                final DefaultServerInfo serverInfo = new DefaultServerInfo("localhost", networkConfig.getPort());
-
-                System.out.println("Calling client login");
-                clientNetworking.createAccount(serverInfo, username, password, new ServerListenerAdapter() {
-                    @Override public void onConnected(ServerSession serverSession) {
+                clientNetworking.addListener(new ServerListenerAdapter() {
+                    @Override public void onConnected(ClientNetworking serverSession) {
                         System.out.println("client.onConnected");
-                        //serverSession.sendMessage(Color.RED);
-                    }
-
-                    @Override public void onIdle(ServerSession serverSession) {
-                        System.out.println("client.onIdle");
-                        error.set("Client should not have gotten idle");
+                        serverSession.sendMessage(new SayMessage(""));
+                        serverSession.sendMessage(Color.RED);
                     }
 
                     @Override
-                    public void onAccountCreated(ServerSession serverSession,
+                    public void onAccountCreated(ClientNetworking serverSession,
                                                  CreateAccountSuccessMessage createAccountSuccessMessage) {
                         System.out.println("client.onAccountCreated");
 
@@ -135,7 +129,7 @@ public class NetworkingTest {
                         serverSession.sendMessage(new SayMessage(HELLO_WORLD));
                     }
 
-                    @Override public void onMessage(ServerSession serverSession, Object message) {
+                    @Override public void onMessage(ClientNetworking serverSession, Object message) {
                         System.out.println("client.onMessage");
                         System.out.println("message = " + message);
 
@@ -149,14 +143,14 @@ public class NetworkingTest {
                     }
 
                     @Override
-                    public void onAccountErrorMessage(ServerSession serverSession,
+                    public void onAccountErrorMessage(ClientNetworking serverSession,
                                                       AccountErrorMessage accountErrorMessage) {
                         System.out.println("client.onAccountErrorMessage " + accountErrorMessage);
 
                         error.set("Got error: " + accountErrorMessage);
                     }
 
-                    @Override public void onException(ServerSession serverSession, Throwable e) {
+                    @Override public void onException(ClientNetworking serverSession, Throwable e) {
                         final String exceptionDesc = "Got exception: " +
                                                      e.getClass().getSimpleName() +
                                                      "" +
@@ -170,12 +164,18 @@ public class NetworkingTest {
                         error.set(exceptionDesc);
                     }
 
-                    @Override public void onDisconnected(ServerSession serverSession) {
-                        if (!clientLoggedIn.get()) error.set("Client should not have gotten disconnected before managing to create an account");
+                    @Override public void onDisconnected(ClientNetworking serverSession) {
+                        if (!clientLoggedIn.get())
+                            error.set("Client should not have gotten disconnected before managing to create an account");
                     }
                 });
-                System.out.println("Client login called");
 
+
+                System.out.println("Calling client connect");
+                clientNetworking.connect(networkConfig, serverInfo);
+
+                System.out.println("Create account from client");
+                clientNetworking.createAccount(username, password);
             }
         });
 
@@ -194,7 +194,7 @@ public class NetworkingTest {
             Thread.sleep(100);
         }
 
-        clientNetworking.shutdown();
+        clientNetworking.disconnect();
         serverNetworking.shutdown();
 
         // Check for errors

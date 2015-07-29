@@ -1,6 +1,7 @@
-package org.messageduct.client.serverinfo;
+package org.messageduct.serverinfo;
 
 import java.net.InetSocketAddress;
+import java.security.PublicKey;
 
 /**
  * Default ServerInfo implementation.
@@ -12,6 +13,7 @@ public class DefaultServerInfo implements ServerInfo {
     private InetSocketAddress address;
     private String name;
     private String description;
+    private PublicKey publicKey;
 
     /**
      * @param hostname hostname to connect to
@@ -47,6 +49,19 @@ public class DefaultServerInfo implements ServerInfo {
         this.address = address;
     }
 
+    /**
+     * @param address internet hostname or IP address and port of the server.
+     * @param name name of the server.
+     * @param description description of the server.
+     * @param publicKey public key of the server, used by the client to identify the server and avoid man-in-the-middle attacks.
+     */
+    public DefaultServerInfo(InetSocketAddress address, String name, String description, PublicKey publicKey) {
+        this.name = name;
+        this.description = description;
+        this.address = address;
+        this.publicKey = publicKey;
+    }
+
     public String getName() {
         return name;
     }
@@ -69,5 +84,13 @@ public class DefaultServerInfo implements ServerInfo {
 
     @Override public void setAddress(InetSocketAddress address) {
         this.address = address;
+    }
+
+    @Override public PublicKey getPublicKey() {
+        return publicKey;
+    }
+
+    @Override public void setPublicKey(PublicKey publicKey) {
+        this.publicKey = publicKey;
     }
 }

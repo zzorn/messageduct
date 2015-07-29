@@ -21,7 +21,4 @@ public abstract class MessageListenerAdapter implements MessageListener {
 
     @Override public void userDisconnected(UserSession session) {
     }
-
-    @Override public void userIdle(UserSession session) {
-    }
 }

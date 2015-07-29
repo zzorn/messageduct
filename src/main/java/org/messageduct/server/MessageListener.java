@@ -15,6 +15,7 @@ public interface MessageListener {
 
     /**
      * Called when a new user account is created, authenticated, and connected to the server.
+     * userConnected is called after this.
      * @param session the session object for the connection to the new user.
      *                Can be used to get the username, send messages to the user, or close the session.
      */
@@ -29,6 +30,7 @@ public interface MessageListener {
 
     /**
      * Called when the specified user connected to the server, and authenticated or created an account.
+     * If an account was created, userCreated is called first, then userConnected.
      * @param session the session object for the connection to the user.
      *                Can be used to get the username, send messages to the user, or close the session.
      */
@@ -40,12 +42,5 @@ public interface MessageListener {
      *                Can be used to get the username, send messages to the user, or close the session.
      */
     void userDisconnected(UserSession session);
-
-    /**
-     * Called when the user has not done anything for a long time.
-     * @param session the session object for the connection to the user.
-     *                Can be used to get the username, send messages to the user, or close the session.
-     */
-    void userIdle(UserSession session);
 
 }

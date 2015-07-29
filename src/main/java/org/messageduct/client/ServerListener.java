@@ -5,66 +5,59 @@ import org.messageduct.account.messages.CreateAccountSuccessMessage;
 import org.messageduct.account.messages.LoginSuccessMessage;
 
 /**
- * Listens to events from the server
+ * Listens to events from the server or connection to the server.
  */
 public interface ServerListener {
 
     /**
      * Called when a message is received from the server.
      *
-     * @param serverSession the session to the server.  Can be used for replies etc.
+     * @param clientNetworking the session to the server.  Can be used for replies etc.
      * @param message received object.
      */
-    void onMessage(ServerSession serverSession, Object message);
+    void onMessage(ClientNetworking clientNetworking, Object message);
 
     /**
      * Called when a connection is established to the server, but not necessarily yet logged in.
      *
-     * @param serverSession the session to the server.  Can be used for sending messages, disconnecting, etc.
+     * @param clientNetworking the session to the server.  Can be used for sending messages, disconnecting, etc.
      */
-    void onConnected(ServerSession serverSession);
+    void onConnected(ClientNetworking clientNetworking);
 
     /**
      * Called when a connection is disconnected from the server.
      *
-     * @param serverSession the session to the server.  Now disconnected.
+     * @param clientNetworking the session to the server.  Now disconnected.
      */
-    void onDisconnected(ServerSession serverSession);
-
-    /**
-     * Called when no message has been sent or received for some time.
-     *
-     * @param serverSession the session to the server.  Can be used for sending messages, disconnecting, etc.
-     */
-    void onIdle(ServerSession serverSession);
+    void onDisconnected(ClientNetworking clientNetworking);
 
     /**
      * Called when log in was successful.
      *
-     * @param serverSession the session to the server.  Can be used for sending messages, disconnecting, etc.
+     * @param clientNetworking the session to the server.  Can be used for sending messages, disconnecting, etc.
      */
-    void onLoggedIn(ServerSession serverSession, LoginSuccessMessage loginSuccessMessage);
+    void onLoggedIn(ClientNetworking clientNetworking, LoginSuccessMessage loginSuccessMessage);
 
     /**
      * Called when account creation was successful.
      *
-     * @param serverSession the session to the server.  Can be used for sending messages, disconnecting, etc.
+     * @param clientNetworking the session to the server.  Can be used for sending messages, disconnecting, etc.
      */
-    void onAccountCreated(ServerSession serverSession, CreateAccountSuccessMessage createAccountSuccessMessage);
+    void onAccountCreated(ClientNetworking clientNetworking, CreateAccountSuccessMessage createAccountSuccessMessage);
 
     /**
      * Called when there was some account related error message from the server.
      *
-     * @param serverSession the session to the server.  Can be used for sending messages, disconnecting, etc.
+     * @param clientNetworking the session to the server.  Can be used for sending messages, disconnecting, etc.
      */
-    void onAccountErrorMessage(ServerSession serverSession, AccountErrorMessage accountErrorMessage);
+    void onAccountErrorMessage(ClientNetworking clientNetworking, AccountErrorMessage accountErrorMessage);
 
     /**
      * Called when there was some communication error or the like.
      *
-     * @param serverSession the session to the server.  Can be used for sending messages, disconnecting, etc.
+     * @param clientNetworking the session to the server.  Can be used for sending messages, disconnecting, etc.
      */
-    void onException(ServerSession serverSession, Throwable e);
+    void onException(ClientNetworking clientNetworking, Throwable e);
 
 
 }

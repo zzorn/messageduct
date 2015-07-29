@@ -2,6 +2,7 @@ package org.messageduct.common;
 
 import org.flowutils.serializer.ConcurrentSerializer;
 
+import java.security.KeyPair;
 import java.util.Collection;
 import java.util.Set;
 
@@ -50,6 +51,16 @@ public interface NetworkConfig {
      * @param serializer serializer to use when serializing message objects to network traffic and back.
      */
     void setSerializer(ConcurrentSerializer serializer);
+
+    /**
+     * @return keypair used by the server to identify itself to the clients.
+     */
+    KeyPair getServerKeys();
+
+    /**
+     * @param serverKeys keypair used by the server to identify itself to the clients.
+     */
+    void setServerKeys(KeyPair serverKeys);
 
     /**
      * @return the classes that are allowed to be sent over the network connection as messages or contained in messages.
@@ -104,4 +115,14 @@ public interface NetworkConfig {
      * @param messageLoggingEnabled if true, messages sent or received over the connection will be logged.
      */
     void setMessageLoggingEnabled(boolean messageLoggingEnabled);
+
+    /**
+     * @return maximum size of a message in bytes (serialized, packed, or encrypted sizes all have to be smaller than this).
+     */
+    int getMaximumMessageSize();
+
+    /**
+     * @param sizeInBytes maximum size of a message in bytes (serialized, packed, or encrypted sizes all have to be smaller than this).
+     */
+    void setMaximumMessageSize(int sizeInBytes);
 }

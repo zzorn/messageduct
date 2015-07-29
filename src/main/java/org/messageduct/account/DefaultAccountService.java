@@ -1,5 +1,6 @@
 package org.messageduct.account;
 
+import org.flowutils.service.ServiceProvider;
 import org.messageduct.account.messages.*;
 import org.messageduct.account.model.Account;
 import org.messageduct.account.model.DefaultAccount;
@@ -59,7 +60,7 @@ public class DefaultAccountService extends AccountServiceBase {
         registerDefaultHandlers();
     }
 
-    @Override protected void doInit() {
+    @Override protected void doInit(ServiceProvider serviceProvider) {
         if (!accountPersistence.isInitialized()) accountPersistence.init();
     }
 
@@ -81,7 +82,7 @@ public class DefaultAccountService extends AccountServiceBase {
             }
         });
 
-        // TODO: Register other handlers
+        // TODO: Register handlers for other messages (password change, reset, account deletion, etc)
     }
 
     @Override public void createAccount(String userName, char[] password) {
@@ -188,8 +189,7 @@ public class DefaultAccountService extends AccountServiceBase {
         return new DefaultAccount(createAccountMessage.getUsername(),
                                   passwordHash,
                                   createAccountMessage.getEmail(),
-                                  createAccountMessage.getPublicKey(),
-                                  createAccountMessage.getBitcoinAddress());
+                                  createAccountMessage.getUserPublicKey());
     }
 
     protected final AccountPersistence getAccountPersistence() {

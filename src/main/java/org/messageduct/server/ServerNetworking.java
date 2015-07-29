@@ -3,6 +3,7 @@ package org.messageduct.server;
 import org.apache.mina.filter.firewall.Subnet;
 import org.flowutils.service.Service;
 import org.messageduct.account.AccountService;
+import org.messageduct.utils.banlist.BanList;
 
 import java.net.InetAddress;
 import java.util.Set;
@@ -12,8 +13,6 @@ import java.util.Set;
  *
  * NOTE: ServerNetworking does not manage AccountService - it's up to the caller to make sure the AccountService is initialized and shut down.
  */
-// TODO: Separate banlist into own class? (For easier save & load, as well as more complicated logic, e.g. timed or permanent bans)
-// TODO: Add support for a generic server info message that is sent when connected but not logged in, that has a server name & description and motd, and where application can subclass it to include relevant metadata.
 public interface ServerNetworking extends Service {
 
     /**
@@ -26,7 +25,6 @@ public interface ServerNetworking extends Service {
      */
     void removeMessageListener(MessageListener listener);
 
-
     /**
      * Starts listening to the configured port, and handling client connections.
      */
@@ -38,27 +36,14 @@ public interface ServerNetworking extends Service {
     void shutdown();
 
     /**
-     * Blacklists a specific ip.
-     * A banned ip will be immediately disconnected if it tries to connect.
+     * @param banList banlist to use to determine if an IP address is allowed to connect to the server.
      */
-    void banIp(InetAddress address);
+    void setBanList(BanList banList);
 
     /**
-     * Removes blacklisting of a previously blacklisted ip.
-     * (If the subnet that the ip is in is blacklisted, the ip will still be blacklisted).
+     * @return banlist to use to determine if an IP address is allowed to connect to the server.
      */
-    void unBanIp(InetAddress address);
+    BanList getBanList();
 
-    /**
-     * Blacklists a whole subnet.
-     * An ip from a banned subnet will be immediately disconnected if it tries to connect.
-     */
-    void banSubnet(Subnet subnet);
-
-    /**
-     * Removes blacklisting of a previously blacklisted subnet.
-     * If there are other blacklistings affecting parts of the subnet, they are not removed.
-     */
-    void unBanSubnet(Subnet subnet);
 
 }

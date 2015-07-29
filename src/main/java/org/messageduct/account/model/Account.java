@@ -3,7 +3,8 @@ package org.messageduct.account.model;
 /**
  * Data about an user account.
  */
-// TODO: Refactor password, email, public/bitcoin keys into separate Authentication implementaions
+// IDEA: Refactor password, email, public keys into separate Authentication implementations?
+// IDEA: Add support for two-factor authentication?
 public interface Account {
 
     /**
@@ -26,8 +27,4 @@ public interface Account {
      */
     String getPublicKey();
 
-    /**
-     * @return bitcoin address for user, if provided, null otherwise.
-     */
-    String getBitcoinAddress();
 }

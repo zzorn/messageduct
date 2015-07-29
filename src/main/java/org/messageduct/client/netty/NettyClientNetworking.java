@@ -5,6 +5,7 @@ import io.netty.channel.*;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
+import org.flowutils.LogUtils;
 import org.messageduct.client.ClientNetworkingBase;
 import org.messageduct.common.NetworkConfig;
 import org.messageduct.common.netty.NettyPipelineBuilder;
@@ -60,6 +61,7 @@ public class NettyClientNetworking extends ClientNetworkingBase {
         clientConfig.group(workerGroup);
         clientConfig.channel(NioSocketChannel.class);
         clientConfig.option(ChannelOption.SO_KEEPALIVE, true);
+        clientConfig.option(ChannelOption.AUTO_READ, true);
         clientConfig.handler(new ChannelInitializer<SocketChannel>() {
             @Override
             public void initChannel(SocketChannel channel) throws Exception {
@@ -79,7 +81,9 @@ public class NettyClientNetworking extends ClientNetworkingBase {
             channel.writeAndFlush(message);
         }
         else {
-            throw new IllegalStateException("Can not send message, no connected channel to server");
+            final String msg = "Can not send message, no connected channel to server";
+            LogUtils.getLogger().warn(msg);
+            throw new IllegalStateException(msg);
         }
     }
 

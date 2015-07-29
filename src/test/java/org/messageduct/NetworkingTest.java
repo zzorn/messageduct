@@ -2,7 +2,6 @@ package org.messageduct;
 
 import static org.junit.Assert.*;
 
-import org.flowutils.LogUtils;
 import org.junit.Test;
 import org.messageduct.account.DefaultAccountService;
 import org.messageduct.account.messages.AccountErrorMessage;
@@ -11,6 +10,8 @@ import org.messageduct.account.persistence.MemoryAccountPersistence;
 import org.messageduct.client.ServerListenerAdapter;
 import org.messageduct.client.ClientNetworking;
 import org.messageduct.client.netty.NettyClientNetworking;
+import org.messageduct.example.HearMessage;
+import org.messageduct.example.SayMessage;
 import org.messageduct.server.netty.NettyServerNetworking;
 import org.messageduct.serverinfo.DefaultServerInfo;
 import org.messageduct.common.DefaultNetworkConfig;
@@ -19,7 +20,6 @@ import org.messageduct.server.ServerNetworking;
 import org.messageduct.server.UserSession;
 import org.messageduct.utils.encryption.AsymmetricEncryption;
 import org.messageduct.utils.encryption.RsaEncryption;
-import org.slf4j.LoggerFactory;
 
 import java.awt.*;
 import java.security.KeyPair;
@@ -203,47 +203,4 @@ public class NetworkingTest {
     }
 
 
-    public class SayMessage {
-        private String text;
-
-        // For serialization
-        private SayMessage() {
-        }
-
-        public SayMessage(String text) {
-            this.text = text;
-        }
-
-        public String getText() {
-            return text;
-        }
-    }
-
-    public class HearMessage {
-        private String speaker;
-        private String text;
-        private Color color;
-
-        // For serialization
-        private HearMessage() {
-        }
-
-        public HearMessage(String speaker, String text, Color color) {
-            this.speaker = speaker;
-            this.text = text;
-            this.color = color;
-        }
-
-        public String getSpeaker() {
-            return speaker;
-        }
-
-        public String getText() {
-            return text;
-        }
-
-        public Color getColor() {
-            return color;
-        }
-    }
 }

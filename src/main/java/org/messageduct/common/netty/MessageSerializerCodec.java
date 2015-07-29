@@ -28,13 +28,17 @@ public final class MessageSerializerCodec extends ByteToMessageCodec<Object> {
     }
 
     @Override protected void encode(ChannelHandlerContext ctx, Object msg, ByteBuf out) throws Exception {
+        System.out.println("MessageSerializerCodec.encode");
+        System.out.println("msg = " + msg);
         final byte[] serializedMessage = concurrentSerializer.serialize(msg);
         out.writeBytes(serializedMessage);
     }
 
     @Override protected void decode(ChannelHandlerContext ctx, ByteBuf in, List<Object> out) throws Exception {
+        System.out.println("MessageSerializerCodec.decode");
         // IDEA: This creates a new ByteBufInputStream for each decoded message, we could reduce garbage by creating a custom reusable InputStream that wraps ByteBuf.
         final Object deSerializedObject = concurrentSerializer.deserialize(new ByteBufInputStream(in));
         out.add(deSerializedObject);
+        System.out.println("deSerializedObject = " + deSerializedObject);
     }
 }

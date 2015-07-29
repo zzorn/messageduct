@@ -166,6 +166,8 @@ public class NettyServerNetworking extends ServiceBase implements ServerNetworki
                            }
                        })
                        .option(ChannelOption.SO_BACKLOG, 128)
+                       .childOption(ChannelOption.SO_KEEPALIVE, true)
+                       .childOption(ChannelOption.AUTO_READ, true)
                        .childOption(ChannelOption.SO_KEEPALIVE, true);
         return serverBootstrap;
     }

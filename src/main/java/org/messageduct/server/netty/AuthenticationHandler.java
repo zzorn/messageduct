@@ -31,6 +31,10 @@ public final class AuthenticationHandler extends ChannelInboundHandlerAdapter {
         super.channelActive(ctx);
     }
 
+    @Override public void channelReadComplete(ChannelHandlerContext ctx) throws Exception {
+        super.channelReadComplete(ctx);
+    }
+
     @Override public void channelRead(ChannelHandlerContext ctx, Object message) throws Exception {
 
         System.out.println("AuthenticationHandler.channelRead");

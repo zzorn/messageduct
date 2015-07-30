@@ -1,6 +1,6 @@
 package org.messageduct.client;
 
-import org.apache.mina.util.ConcurrentHashSet;
+import io.netty.util.internal.ConcurrentSet;
 import org.flowutils.LogUtils;
 import org.flowutils.ThreadUtils;
 import org.messageduct.account.messages.*;
@@ -22,7 +22,7 @@ import static org.flowutils.Check.notNull;
  */
 public abstract class ClientNetworkingBase implements ClientNetworking {
 
-    private final Set<ServerListener> listeners = new ConcurrentHashSet<ServerListener>();
+    private final Set<ServerListener> listeners = new ConcurrentSet<ServerListener>();
     private final Deque<Object> queuedMessages = new ConcurrentLinkedDeque<Object>();
     private final Logger log = LogUtils.getLogger();
 

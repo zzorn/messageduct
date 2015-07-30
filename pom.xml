@@ -1,5 +1,4 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>org.messageduct</groupId>
@@ -46,28 +45,6 @@
             <version>4.0.28.Final</version>
         </dependency>
 
-
-        <!-- For networking -->
-        <!--
-        Mina was picked over alternatives such as KryoNet as it is mavenized
-        and has a good filterchain concept that makes it easy to add encryption,
-        some ddos protection, authentication, packing, swappable protocols,
-        and a threadpool based execution system.
-        (correction: No, encryption and authentication was not easy to add after all.
-        Compression and threading was provided out of the box and seem to work.)
-        -->
-        <dependency>
-            <groupId>org.apache.mina</groupId>
-            <artifactId>mina-core</artifactId>
-            <version>2.0.7</version>
-        </dependency>
-
-        <!-- For compressed networking -->
-        <dependency>
-            <groupId>org.apache.mina</groupId>
-            <artifactId>mina-filter-compression</artifactId>
-            <version>2.0.7</version>
-        </dependency>
 
         <!-- For object serialization -->
         <dependency>

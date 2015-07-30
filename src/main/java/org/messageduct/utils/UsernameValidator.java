@@ -1,7 +1,6 @@
 package org.messageduct.utils;
 
-import org.apache.mina.util.ConcurrentHashSet;
-import org.bouncycastle.util.Strings;
+import io.netty.util.internal.ConcurrentSet;
 import org.flowutils.Check;
 import org.flowutils.StringUtils;
 
@@ -17,7 +16,7 @@ public class UsernameValidator implements StringValidator {
     public static final int DEFAULT_MIN_LENGTH = 3;
     public static final int DEFAULT_MAX_LENGTH = 32;
 
-    private final Set<String> forbiddenUserNames = new ConcurrentHashSet<String>();
+    private final Set<String> forbiddenUserNames = new ConcurrentSet<String>();
     private final int minUsernameLength;
     private final int maxUsernameLength;
 

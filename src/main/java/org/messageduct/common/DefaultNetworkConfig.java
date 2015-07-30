@@ -1,12 +1,20 @@
 package org.messageduct.common;
 
 import org.flowutils.Check;
+import org.flowutils.Symbol;
 import org.flowutils.serializer.ConcurrentSerializer;
 import org.flowutils.serializer.ConcurrentSerializerWrapper;
 import org.flowutils.serializer.KryoSerializer;
 import org.messageduct.account.messages.*;
+import org.messageduct.serverinfo.DefaultServerInfo;
+import org.messageduct.serverinfo.ServerInfoMessage;
+import org.messageduct.serverinfo.ServerInfoRequestMessage;
+import sun.security.rsa.RSAPublicKeyImpl;
 
+import java.net.InetAddress;
+import java.net.InetSocketAddress;
 import java.security.KeyPair;
+import java.security.PublicKey;
 import java.util.*;
 
 import static org.flowutils.Check.notNull;
@@ -30,10 +38,9 @@ public class DefaultNetworkConfig implements NetworkConfig {
     private boolean messageLoggingEnabled;
     private int idleTimeSeconds;
     private int maximumMessageSize;
-    private ConcurrentSerializer serializer;
     private KeyPair serverKeys;
 
-    private final Set<Class> allowedClasses = new HashSet<Class>();
+    private final Set<Class> allowedClasses = new LinkedHashSet<Class>();
 
     /**
      * Creates a new DefaultNetworkConfig with default values and the specified allowed classes.
@@ -48,7 +55,6 @@ public class DefaultNetworkConfig implements NetworkConfig {
              DEFAULT_IDLE_TIME_SECONDS,
              DEFAULT_MESSAGE_SIZE,
              null,
-             new ConcurrentSerializerWrapper(KryoSerializer.class),
              Arrays.asList(allowedClasses));
     }
 
@@ -62,7 +68,6 @@ public class DefaultNetworkConfig implements NetworkConfig {
      * @param messageLoggingEnabled if true, messages sent or received over the connection will be logged.  Defaults to false.
      * @param idleTimeSeconds number of seconds after which an idle event is triggered.
      * @param maximumMessageSize maximum size of a message in bytes (serialized, packed, or encrypted sizes all have to be smaller than this).
-     * @param serializer a thread safe serializer that is used to serialize and deserialize messages sent over the network.
      * @param allowedClasses the classes that are allowed to be sent over the network.
      */
 
@@ -72,10 +77,16 @@ public class DefaultNetworkConfig implements NetworkConfig {
                                 boolean messageLoggingEnabled,
                                 int idleTimeSeconds,
                                 int maximumMessageSize,
-                                ConcurrentSerializer serializer,
                                 Collection<Class> allowedClasses) {
 
-        this(port, encryptionEnabled, compressionEnabled, messageLoggingEnabled, idleTimeSeconds, maximumMessageSize, null, serializer, allowedClasses);
+        this(port,
+             encryptionEnabled,
+             compressionEnabled,
+             messageLoggingEnabled,
+             idleTimeSeconds,
+             maximumMessageSize,
+             null,
+             allowedClasses);
     }
 
     /**
@@ -88,7 +99,6 @@ public class DefaultNetworkConfig implements NetworkConfig {
      * @param idleTimeSeconds number of seconds after which an idle event is triggered.
      * @param maximumMessageSize maximum size of a message in bytes (serialized, packed, or encrypted sizes all have to be smaller than this).
      * @param serverKeys keypair used by the server to identify itself to the clients.  Pass in null on the client.
-     * @param serializer a thread safe serializer that is used to serialize and deserialize messages sent over the network.
      * @param allowedClasses the classes that are allowed to be sent over the network.
      */
 
@@ -99,7 +109,6 @@ public class DefaultNetworkConfig implements NetworkConfig {
                                 int idleTimeSeconds,
                                 int maximumMessageSize,
                                 KeyPair serverKeys,
-                                ConcurrentSerializer serializer,
                                 Collection<Class> allowedClasses) {
         this.port = port;
         this.encryptionEnabled = encryptionEnabled;
@@ -107,7 +116,6 @@ public class DefaultNetworkConfig implements NetworkConfig {
         this.messageLoggingEnabled = messageLoggingEnabled;
         this.serverKeys = serverKeys;
         setIdleTimeSeconds(idleTimeSeconds);
-        this.serializer = serializer;
         setMaximumMessageSize(maximumMessageSize);
 
         registerDefaultAllowedClasses();
@@ -157,21 +165,6 @@ public class DefaultNetworkConfig implements NetworkConfig {
         maximumMessageSize = sizeInBytes;
     }
 
-    @Override public ConcurrentSerializer getSerializer() {
-        // Make sure the allowed classes get registered with the serializer before it is used.
-        if (serializer != null) {
-            serializer.registerAllowedClasses(allowedClasses);
-        }
-
-        return serializer;
-    }
-
-    @Override public void setSerializer(ConcurrentSerializer serializer) {
-        Check.notNull(serializer, "serializer");
-
-        this.serializer = serializer;
-    }
-
     @Override public int getIdleTimeSeconds() {
         return idleTimeSeconds;
     }
@@ -191,7 +184,7 @@ public class DefaultNetworkConfig implements NetworkConfig {
     }
 
     @Override public Set<Class> getAllowedClasses() {
-        return serializer.getAllowedClasses();
+        return allowedClasses;
     }
 
     @Override public void registerAllowedClass(Class allowedClass) {
@@ -216,6 +209,9 @@ public class DefaultNetworkConfig implements NetworkConfig {
         registerPrimitiveTypes();
         registerCollectionTypes();
         registerAccountManagementClasses();
+        registerServerInfoClasses();
+        registerAllowedClasses(String.class);
+        registerAllowedClasses(Symbol.class);
     }
 
     protected void registerPrimitiveTypes() {
@@ -227,6 +223,13 @@ public class DefaultNetworkConfig implements NetworkConfig {
                                long[].class,
                                float[].class,
                                double[].class);
+        registerAllowedClasses(Byte.class,
+                               Short.class,
+                               Integer.class,
+                               Long.class,
+                               Float.class,
+                               Double.class,
+                               Character.class);
     }
 
     protected void registerCollectionTypes() {
@@ -251,5 +254,15 @@ public class DefaultNetworkConfig implements NetworkConfig {
                                PasswordResetExecuteMessage.class,
                                ChangePasswordMessage.class);
         */
+    }
+
+    private void registerServerInfoClasses() {
+        registerAllowedClasses(ServerInfoRequestMessage.class,
+                               ServerInfoMessage.class,
+                               DefaultServerInfo.class,
+                               InetSocketAddress.class,
+                               InetAddress.class,
+                               PublicKey.class,
+                               RSAPublicKeyImpl.class);
     }
 }

@@ -97,6 +97,7 @@ public abstract class ClientNetworkingBase implements ClientNetworking {
     }
 
     @Override public final void sendMessage(Object message) {
+
         notNull(message, "message");
         if (!connectCalled) throw new IllegalStateException("connect should be called before sendMessage!");
         if (isDisconnected()) {

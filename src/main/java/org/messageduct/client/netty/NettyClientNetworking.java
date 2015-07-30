@@ -76,7 +76,13 @@ public class NettyClientNetworking extends ClientNetworkingBase {
     }
 
     @Override protected void doSendMessage(Object message) {
+        // DEBUG:
+        System.out.println("NettyClientNetworking.doSendMessage");
+        System.out.println("message = " + message);
+        System.out.println("channel = " + channel);
+
         if (channel != null) {
+
             // TODO: Smarter flush handling, maybe only flush every 10 ms or so?
             channel.writeAndFlush(message);
         }

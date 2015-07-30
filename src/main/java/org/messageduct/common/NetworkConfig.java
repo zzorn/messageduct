@@ -1,7 +1,5 @@
 package org.messageduct.common;
 
-import org.flowutils.serializer.ConcurrentSerializer;
-
 import java.security.KeyPair;
 import java.util.Collection;
 import java.util.Set;
@@ -40,17 +38,6 @@ public interface NetworkConfig {
      * @param enableCompression true if compression should be used for the connection, false if not.
      */
     void setCompressionEnabled(boolean enableCompression);
-
-    /**
-     * @return serializer to use when serializing message objects to network traffic and back.
-     *         Automatically configured with the allowed classes when retrieved.
-     */
-    ConcurrentSerializer getSerializer();
-
-    /**
-     * @param serializer serializer to use when serializing message objects to network traffic and back.
-     */
-    void setSerializer(ConcurrentSerializer serializer);
 
     /**
      * @return keypair used by the server to identify itself to the clients.

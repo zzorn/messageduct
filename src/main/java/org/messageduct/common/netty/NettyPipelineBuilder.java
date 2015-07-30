@@ -54,8 +54,15 @@ public final class NettyPipelineBuilder {
 
         // Send messages with length field
         int bytesNeededToDescribeMessageSize = bytesNeededToRepresentNumber(networkConfig.getMaximumMessageSize());
-        pipeline.addLast(new LengthFieldPrepender(bytesNeededToDescribeMessageSize, false));
-        pipeline.addLast(new LengthFieldBasedFrameDecoder(networkConfig.getMaximumMessageSize(), 0, bytesNeededToDescribeMessageSize));
+        pipeline.addLast(new LengthFieldPrepender(
+                bytesNeededToDescribeMessageSize,
+                false));
+        pipeline.addLast(new LengthFieldBasedFrameDecoder(
+                networkConfig.getMaximumMessageSize(),
+                0,
+                bytesNeededToDescribeMessageSize,
+                0,
+                bytesNeededToDescribeMessageSize));
 
         // Encrypt/decrypt traffic on the connection if encryption is enabled
         if (networkConfig.isEncryptionEnabled()) {
@@ -76,11 +83,7 @@ public final class NettyPipelineBuilder {
         }
 
         // Encode/Decode traffic between Java Objects and binary data
-        pipeline.addLast(new MessageSerializerCodec(new ConcurrentSerializerWrapper(new SerializerFactory() {
-            @Override public Serializer createSerializer() {
-                return new KryoSerializer(networkConfig.getMaximumMessageSize()/8, networkConfig.getMaximumMessageSize(), true, networkConfig.getAllowedClasses());
-            }
-        })));
+        pipeline.addLast(new MessageSerializerCodec(networkConfig.getMaximumMessageSize(), networkConfig.getAllowedClasses()));
 
         // Log messages if desired
         if (networkConfig.isMessageLoggingEnabled()) {

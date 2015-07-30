@@ -6,6 +6,7 @@ import io.netty.handler.codec.MessageToMessageCodec;
 import org.flowutils.ByteArrayUtils;
 import org.flowutils.Check;
 import org.flowutils.LogUtils;
+import org.messageduct.utils.ByteBufUtils;
 import org.messageduct.utils.encryption.*;
 
 import javax.crypto.SecretKey;
@@ -102,6 +103,10 @@ public final class EncryptionCodec extends MessageToMessageCodec<ByteBuf, ByteBu
     }
 
     @Override protected void encode(ChannelHandlerContext ctx, ByteBuf msg, List<Object> out) throws Exception {
+        System.out.println("EncryptionCodec.encode");
+        System.out.println("  msg = " + msg);
+        System.out.println("  clientSide = " + clientSide);
+        System.out.println("  state = " + state);
         switch (state) {
             case SERVER_BEFORE_SENDING_PUBLIC_KEY:     // Drop through
             case CLIENT_WAITING_FOR_SERVER_PUBLIC_KEY: // Drop through
@@ -113,7 +118,7 @@ public final class EncryptionCodec extends MessageToMessageCodec<ByteBuf, ByteBu
             case CONNECTED:
                 // Encrypt message with session key and send it on
                 try {
-                    out.add(symmetricEncryption.encrypt(byteBufToByteArray(msg), sessionKey));
+                    out.add(symmetricEncryption.encrypt(ByteBufUtils.byteBufToByteArray(msg), sessionKey));
                 } catch (Exception e) {
                     protocolError(ctx, "could not encrypt a message: " + e.getMessage());
                 }
@@ -130,6 +135,9 @@ public final class EncryptionCodec extends MessageToMessageCodec<ByteBuf, ByteBu
     }
 
     @Override protected void decode(ChannelHandlerContext ctx, ByteBuf msg, List<Object> out) throws Exception {
+        System.out.println("EncryptionCodec.decode");
+        System.out.println("  clientSide = " + clientSide);
+        System.out.println("  state = " + state);
         switch (state) {
             case SERVER_BEFORE_SENDING_PUBLIC_KEY:
                 // We do not expect anything from the client yet
@@ -175,7 +183,7 @@ public final class EncryptionCodec extends MessageToMessageCodec<ByteBuf, ByteBu
                 System.out.println("msg = " + msg);
                 // Decrypt the message with the session key
                 try {
-                    out.add(symmetricEncryption.decrypt(byteBufToByteArray(msg), sessionKey));
+                    out.add(symmetricEncryption.decrypt(ByteBufUtils.byteBufToByteArray(msg), sessionKey));
                 } catch (Exception e) {
                     protocolError(ctx, "could not decrypt a message: " + e.getMessage());
                 }
@@ -213,9 +221,11 @@ public final class EncryptionCodec extends MessageToMessageCodec<ByteBuf, ByteBu
     }
 
     private void startHandshakeIfNecessary(ChannelHandlerContext ctx) {
+        System.out.println("EncryptionCodec.startHandshakeIfNecessary");
         if (!isClientSide()) {
             // If public key has not yet been sent, do it
             if (state == SERVER_BEFORE_SENDING_PUBLIC_KEY) {
+                System.out.println("Starting handshake");
                 // Create public key message
                 final byte[] serverPublicKeyMessage = ByteArrayUtils.composeWithSizePrefixes(
                         SERVER_INITIAL_HANDSHAKE_HEADER.getBytes(ASCII),
@@ -233,7 +243,7 @@ public final class EncryptionCodec extends MessageToMessageCodec<ByteBuf, ByteBu
 
     private byte[] handleServerPublicKeyMessageOnClient(ChannelHandlerContext ctx, ByteBuf msg) throws ProtocolException {
         // Decode public key message
-        byte[] handshake = byteBufToByteArray(msg);
+        byte[] handshake = ByteBufUtils.byteBufToByteArray(msg);
 
         // Decompose into parts and check the header block
         List<byte[]> handshakeParts = decomposeAndCheckHandshake(ctx, handshake, "server", 2, SERVER_INITIAL_HANDSHAKE_HEADER);
@@ -280,7 +290,7 @@ public final class EncryptionCodec extends MessageToMessageCodec<ByteBuf, ByteBu
 
     private byte[] handleClientHandshakeOnServer(ChannelHandlerContext ctx, ByteBuf msg) throws ProtocolException {
         // Get handshake as byte array
-        byte[] encryptedClientHandshake = byteBufToByteArray(msg);
+        byte[] encryptedClientHandshake = ByteBufUtils.byteBufToByteArray(msg);
 
         // Decrypt
         byte[] clientHandshake = decrypt(ctx, encryptedClientHandshake, serverPrivateKey, "client");
@@ -317,7 +327,7 @@ public final class EncryptionCodec extends MessageToMessageCodec<ByteBuf, ByteBu
 
     private void handleServerHandshakeOnClient(ChannelHandlerContext ctx, ByteBuf msg) throws ProtocolException {
         // Get handshake as byte array
-        byte[] encryptedServerHandshake = byteBufToByteArray(msg);
+        byte[] encryptedServerHandshake = ByteBufUtils.byteBufToByteArray(msg);
 
         // Decrypt
         byte[] serverHandshake = decrypt(ctx, encryptedServerHandshake, clientKeys.getPrivate(), "server");
@@ -369,7 +379,7 @@ public final class EncryptionCodec extends MessageToMessageCodec<ByteBuf, ByteBu
      * Queues a message until the handshake is complete.
      */
     private void queueMessage(ByteBuf msg) {
-        byte[] storedMessage = byteBufToByteArray(msg);
+        byte[] storedMessage = ByteBufUtils.byteBufToByteArray(msg);
         queuedMessages.add(storedMessage);
     }
 
@@ -455,12 +465,6 @@ public final class EncryptionCodec extends MessageToMessageCodec<ByteBuf, ByteBu
         return serializedSessionPass;
     }
 
-    private byte[] byteBufToByteArray(ByteBuf buffer) {
-        byte[] byteArray = new byte[buffer.readableBytes()];
-        if (byteArray.length > 0) buffer.readBytes(byteArray);
-        return byteArray;
-    }
-
     private void protocolError(ChannelHandlerContext ctx, String message) throws ProtocolException {
         final String errorMessage = "We were in state " + state + " " +
                                     "on the " + getSideAsString() + " side " +
@@ -476,6 +480,10 @@ public final class EncryptionCodec extends MessageToMessageCodec<ByteBuf, ByteBu
     private void setState(State state) {
         notNull(state, "state");
         if (!state.isApplicableState(isClientSide())) throw new IllegalArgumentException("The state should be applicable to " + getSideAsString() + ", but it was: " + state);
+
+        System.out.println("EncryptionCodec.setState");
+        System.out.println("  clientSide = " + clientSide);
+        System.out.println("  state = " + state);
 
         this.state = state;
     }

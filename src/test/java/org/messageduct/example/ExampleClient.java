@@ -1,5 +1,7 @@
 package org.messageduct.example;
 
+import com.esotericsoftware.minlog.Log;
+import org.flowutils.serializer.KryoSerializer;
 import org.messageduct.account.messages.CreateAccountSuccessMessage;
 import org.messageduct.account.messages.LoginSuccessMessage;
 import org.messageduct.client.ClientNetworking;
@@ -22,9 +24,17 @@ public class ExampleClient {
         networkConfig.registerAllowedClasses(Color.class,
                                              SayMessage.class,
                                              HearMessage.class);
-        networkConfig.setCompressionEnabled(false);
+        networkConfig.setCompressionEnabled(true);
         networkConfig.setEncryptionEnabled(false);
         networkConfig.setMessageLoggingEnabled(true);
+
+        // Turn on Kryo logging
+        Log.TRACE = false;
+        Log.DEBUG = true;
+        Log.INFO = true;
+        Log.WARN = true;
+        Log.ERROR = true;
+
         return networkConfig;
     }
 
@@ -58,7 +68,7 @@ public class ExampleClient {
         });
 
         clientNetworking.connect(networkConfig, "localhost", networkConfig.getPort());
-        clientNetworking.createAccount("foo", "secritPass".toCharArray());
+        clientNetworking.createAccount("foo2", "superLongSecritPass".toCharArray());
         clientNetworking.sendMessage(new SayMessage("Hi server, client here"));
     }
 

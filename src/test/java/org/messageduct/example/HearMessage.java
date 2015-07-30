@@ -31,4 +31,12 @@ public class HearMessage {
     public Color getColor() {
         return color;
     }
+
+    @Override public String toString() {
+        return "HearMessage{" +
+               "speaker='" + speaker + '\'' +
+               ", text='" + text + '\'' +
+               ", color=" + color +
+               '}';
+    }
 }

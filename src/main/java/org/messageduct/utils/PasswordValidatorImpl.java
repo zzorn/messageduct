@@ -1,6 +1,5 @@
 package org.messageduct.utils;
 
-import com.sun.xml.internal.fastinfoset.util.CharArray;
 import org.flowutils.Check;
 
 import java.util.*;
@@ -202,7 +201,7 @@ public final class PasswordValidatorImpl implements PasswordValidator {
 
         // Check against username
         if (equalsIgnoreCase(userName, password)) return "Password and username can not be the same.";
-        if (userName.contains(wrapInCharArray(password))) return "The username can not contain the password.";
+        if (contains(userName, password)) return "The username can not contain the password.";
 
         // Check that not all the same character
         if (containsOnlyOneChar(password)) return "The password can not be all the same character.";
@@ -214,15 +213,19 @@ public final class PasswordValidatorImpl implements PasswordValidator {
         return null;
     }
 
-    private CharArray wrapInCharArray(char[] chars) {
-        return new CharArray(chars, 0, chars.length, false);
-    }
-
     private boolean containedInDictionary(char[] password, final List<String> dictionary) {
         for (String dictionaryWord : dictionary) {
             if (equalsIgnoreCase(dictionaryWord, password)) return true;
         }
         return false;
+    }
+
+    private boolean contains(String text, char[] chars) {
+        StringBuilder builder = new StringBuilder();
+        builder.append(chars);
+        final boolean contains = text.contains(builder);
+        builder.delete(0, chars.length);
+        return contains;
     }
 
     private boolean containsOnlyOneChar(char[] s) {

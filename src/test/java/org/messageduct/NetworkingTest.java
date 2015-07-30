@@ -114,7 +114,7 @@ public class NetworkingTest {
                     @Override public void onConnected(ClientNetworking serverSession) {
                         System.out.println("client.onConnected");
                         serverSession.sendMessage(new SayMessage(""));
-                        serverSession.sendMessage(Color.RED);
+                        //serverSession.sendMessage(Color.RED);
                     }
 
                     @Override
@@ -134,12 +134,9 @@ public class NetworkingTest {
                         System.out.println("message = " + message);
 
                         // We should be getting back a hear message for the message we sent in account created
-                        if (!(message instanceof HearMessage)) {
-                            error.set("client.onMessage: Expected a hear message, but got: " + message);
+                        if ((message instanceof HearMessage)) {
+                            serverSession.disconnect();
                         }
-
-                        serverSession.disconnect();
-
                     }
 
                     @Override

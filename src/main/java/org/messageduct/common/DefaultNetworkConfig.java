@@ -2,19 +2,11 @@ package org.messageduct.common;
 
 import org.flowutils.Check;
 import org.flowutils.Symbol;
-import org.flowutils.serializer.ConcurrentSerializer;
-import org.flowutils.serializer.ConcurrentSerializerWrapper;
-import org.flowutils.serializer.KryoSerializer;
 import org.messageduct.account.messages.*;
 import org.messageduct.serverinfo.DefaultServerInfo;
 import org.messageduct.serverinfo.ServerInfoMessage;
 import org.messageduct.serverinfo.ServerInfoRequestMessage;
-import sun.security.rsa.RSAPublicKeyImpl;
-
-import java.net.InetAddress;
-import java.net.InetSocketAddress;
 import java.security.KeyPair;
-import java.security.PublicKey;
 import java.util.*;
 
 import static org.flowutils.Check.notNull;
@@ -259,10 +251,6 @@ public class DefaultNetworkConfig implements NetworkConfig {
     private void registerServerInfoClasses() {
         registerAllowedClasses(ServerInfoRequestMessage.class,
                                ServerInfoMessage.class,
-                               DefaultServerInfo.class,
-                               InetSocketAddress.class,
-                               InetAddress.class,
-                               PublicKey.class,
-                               RSAPublicKeyImpl.class);
+                               DefaultServerInfo.class);
     }
 }

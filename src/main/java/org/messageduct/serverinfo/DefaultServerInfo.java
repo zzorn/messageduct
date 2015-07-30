@@ -8,6 +8,8 @@ import java.security.PublicKey;
  *
  * Can be overridden with more application specific data if desired.
  */
+// TODO: Store public key as serialized in ServerInfo, and store internet address as a string (and port number).
+// TODO  This allows serialization of ServerInfo without dragging along a lot of internal implementation classes.
 public class DefaultServerInfo implements ServerInfo {
 
     private InetSocketAddress address;
